@@ -1,7 +1,7 @@
 from firebase_functions import https_fn
 from firebase_admin import initialize_app
 
-from _prompt_flows.sectioning import get_sections
+from _prompting.sectioning import get_sections
 from _scripts.transcript_processing import (
     create_firestore_transcript, 
     get_transcript_data, 
