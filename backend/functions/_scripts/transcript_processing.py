@@ -46,7 +46,6 @@ def create_firestore_transcript(transcript_data: List[Dict[str, Any]], filename:
             "role": turn["role"],
             "speaker": turn["speaker"],
             "start_time": turn["start_time"],
-            "end_time": turn["end_time"],
             "content": turn["content"]
         }
         turn_id = create_subcollection_document('transcripts', transcript_ref.id, 'turns', turn_data)

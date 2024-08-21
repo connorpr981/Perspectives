@@ -1,14 +1,8 @@
 from firebase_functions import https_fn
 from firebase_admin import initialize_app
-
-from _prompting.sectioning import get_sections
-from _scripts.transcript_processing import (
-    create_firestore_transcript, 
-    get_transcript_data, 
-    update_firestore_with_sections
-)
 from _utils.storage_utils import read_json_from_storage
-
+from _scripts.transcript_processing import create_firestore_transcript, get_transcript_data, update_firestore_with_sections
+from _prompting.sectioning import get_sections
 app = initialize_app()
 
 @https_fn.on_request()
@@ -24,7 +18,9 @@ def read_transcript_from_storage(req: https_fn.Request) -> https_fn.Response:
     except Exception as e:
         return https_fn.Response(f"Error creating transcript: {str(e)}", status=500)
 
-@https_fn.on_request()
+@https_fn.on_request(
+    timeout_sec=540
+)
 def generate_transcript_sections(req: https_fn.Request) -> https_fn.Response:
     transcript_id = req.args.get("transcript_id")
     if not transcript_id:

@@ -1,0 +1,19 @@
+{
+  "name": "sample/dwarkesh_fchollet.json",
+  "bucket": "perspectives-f2e80.appspot.com",
+  "metageneration": 1,
+  "generation": 1724199159967,
+  "contentType": "application/json",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "73925a87-43cf-4b50-955d-abab6a579f6b"
+  ],
+  "etag": "1JRmTulTrM44wL10eawtY485vW8",
+  "customMetadata": {},
+  "timeCreated": "2024-08-21T00:12:39.967Z",
+  "updated": "2024-08-21T00:12:39.967Z",
+  "size": 500982,
+  "md5Hash": "eM6ztUDFUsda2/G7TIEbqQ==",
+  "crc32c": "1400314528"
+}

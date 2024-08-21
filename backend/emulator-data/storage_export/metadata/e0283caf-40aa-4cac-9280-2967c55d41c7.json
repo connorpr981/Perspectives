@@ -1,0 +1,19 @@
+{
+  "name": "sample/dwarkesh_patio11.json",
+  "bucket": "perspectives-f2e80.appspot.com",
+  "metageneration": 1,
+  "generation": 1724199159957,
+  "contentType": "application/json",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "20687f4f-44cc-47c4-9029-862cf868a7f6"
+  ],
+  "etag": "yED6ZmNRhgdfMxzdhjb6IfvxQ4c",
+  "customMetadata": {},
+  "timeCreated": "2024-08-21T00:12:39.957Z",
+  "updated": "2024-08-21T00:12:39.957Z",
+  "size": 615398,
+  "md5Hash": "o1zRwSULInGKuBsn7GsF9g==",
+  "crc32c": "3979037149"
+}

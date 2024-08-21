@@ -1,0 +1,19 @@
+{
+  "name": "sample/dwarkesh_tonyblair.json",
+  "bucket": "perspectives-f2e80.appspot.com",
+  "metageneration": 1,
+  "generation": 1724199159936,
+  "contentType": "application/json",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "b4001084-7dcf-470c-b136-3f4ba3511d93"
+  ],
+  "etag": "EZOcUTYqnoJiSn5DWXIW+PgPSWw",
+  "customMetadata": {},
+  "timeCreated": "2024-08-21T00:12:39.936Z",
+  "updated": "2024-08-21T00:12:39.936Z",
+  "size": 240212,
+  "md5Hash": "Nmq5hrs8JEp3FNStOGFDHg==",
+  "crc32c": "3508569250"
+}
