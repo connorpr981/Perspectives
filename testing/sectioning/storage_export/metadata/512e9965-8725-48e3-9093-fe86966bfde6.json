@@ -2,17 +2,17 @@
   "name": "sample/dwarkesh_zuck.json",
   "bucket": "perspectives-f2e80.appspot.com",
   "metageneration": 1,
-  "generation": 1724199159951,
+  "generation": 1724256431098,
   "contentType": "application/json",
   "storageClass": "STANDARD",
   "contentDisposition": "inline",
   "downloadTokens": [
-    "5c6c7e3d-97e6-4865-9bc7-d0f788749544"
+    "635201e5-7cfb-4a9b-aa13-a2e036d741c4"
   ],
-  "etag": "VgM3jCHAiqB4taKu0dUXKYB1/7E",
+  "etag": "Acw6LgpjC5aS/ilov/ft9JAA4TA",
   "customMetadata": {},
-  "timeCreated": "2024-08-21T00:12:39.951Z",
-  "updated": "2024-08-21T00:12:39.951Z",
+  "timeCreated": "2024-08-21T16:07:11.098Z",
+  "updated": "2024-08-21T16:07:11.098Z",
   "size": 332846,
   "md5Hash": "CN++TRT1Ee98ixINyt9BlQ==",
   "crc32c": "3230058407"
