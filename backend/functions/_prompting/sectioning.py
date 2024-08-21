@@ -118,7 +118,10 @@ Proposed Structured Transcript:
 
 Analyze the structure using the Criticism model, providing specific feedback and recommendations for improvement. Focus on:
 1. Thematic integrity: Ensure each section maintains a cohesive theme without being too broad or narrow, allowing for a clear context to examine the guest's responses.
-2. Section length: Aim for sections containing 4-16 turns, identifying any that are too short or long, while ensuring each section captures complete thoughts and responses.
+2. Section length: Aim for sections containing 4-16 turns, identifying any that are too short or long. For sections exceeding 16 turns:
+   a. Identify natural thematic breaks or shifts in the conversation.
+   b. Suggest splitting the section at these points, ensuring each new section maintains thematic coherence.
+   c. Recommend new titles, subtitles, and descriptions for the split sections.
 3. Content representation: Evaluate how well titles, subtitles, and descriptions reflect the content objectively and analytically, with a focus on highlighting the guest's key points and perspectives.
 4. Narrative flow: Assess the logical progression and interconnection of topics throughout the interview, ensuring that the development of the guest's thoughts is clearly represented.
 5. Handling of introductions and conclusions: Ensure these are incorporated into the first and last sections without being their primary focus, unless they contain significant content from the guest.
@@ -132,6 +135,8 @@ Provide actionable recommendations to improve the structure while maintaining ou
 - Logical topic progression
 - Balanced distribution of sections
 - Facilitation of closer examination of guest responses
+
+When suggesting improvements for overly long sections, provide specific guidance on where to split the section and how to maintain thematic coherence in the resulting new sections.
 
 Do not suggest changes that contradict these principles or our overall goals for the transcript structure.
 """
@@ -197,7 +202,7 @@ def get_sections(transcript_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     theme_guide_messages.add_user_message(THEME_GUIDE_PROMPT.format(formatted_transcript=formatted_transcript))
     
     theme_guide, _ = get_response(
-        provider="anthropic",
+        provider="openai",
         messages=theme_guide_messages,
         response_model=ThemeGuide,
     )
@@ -215,7 +220,7 @@ def get_sections(transcript_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     """)
     
     initial_response, _ = get_response(
-        provider="anthropic",
+        provider="openai",
         messages=sectioning_messages,
         response_model=StructuredTranscript,
     )
@@ -230,7 +235,7 @@ def get_sections(transcript_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     ))
     
     criticism_response, _ = get_response(
-        provider="anthropic",
+        provider="openai",
         messages=criticism_messages,
         response_model=Criticism,
     )
@@ -241,7 +246,7 @@ def get_sections(transcript_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     ))
     
     final_response, _ = get_response(
-        provider="anthropic",
+        provider="openai",
         messages=sectioning_messages,
         response_model=StructuredTranscript,
     )

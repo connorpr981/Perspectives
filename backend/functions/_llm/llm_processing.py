@@ -19,7 +19,7 @@ class AIProviderClient:
             self.model_name = model or "claude-3-5-sonnet-20240620"
         elif provider == "openai":
             self.client = instructor.from_openai(OpenAI())
-            self.model_name = model or "gpt-4o-mini"
+            self.model_name = model or "gpt-4o"
         else:
             raise ValueError(f"Invalid provider: {provider}")
 
