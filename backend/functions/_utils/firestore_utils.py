@@ -1,7 +1,10 @@
+import os
 from google.cloud import firestore
 from typing import Any, Dict, List
 
 def get_firestore_client():
+    if os.environ.get("FIRESTORE_EMULATOR_HOST"):
+        return firestore.Client(project="perspectives-f2e80")
     return firestore.Client()
 
 def delete_collection(collection_ref, batch_size=100):
@@ -32,3 +35,14 @@ def create_subcollection_document(parent_collection: str, parent_id: str, subcol
     doc_ref = db.collection(parent_collection).document(parent_id).collection(subcollection).document()
     doc_ref.set(data)
     return doc_ref.id
+
+def print_firestore_data():
+    print("Printing Firestore data:")
+    db = get_firestore_client()
+    docs = db.collection("transcripts").get()
+    if not docs:
+        print("No documents found in 'transcripts' collection.")
+    for doc in docs:
+        print(f"Document ID: {doc.id}")
+        print(f"Document data: {doc.to_dict()}")
+        print("---")

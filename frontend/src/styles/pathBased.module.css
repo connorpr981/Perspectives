@@ -1,0 +1,438 @@
+/* Column styles */
+.column {
+  flex: 0 0 var(--column-width);
+  width: var(--column-width);
+  scroll-snap-align: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-right: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  position: relative;
+}
+
+.columnHeader {
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.columnTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-header);
+  padding: 1rem;
+  margin: 0;
+}
+
+.activeColumnIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--active-column-indicator-height);
+  background-color: var(--color-active-indicator);
+  opacity: 0;
+  transition: opacity var(--transition-duration) var(--transition-timing);
+  z-index: 2;
+}
+
+.column.activeColumn .activeColumnIndicator,
+.column.hasSelectedItem .activeColumnIndicator {
+  opacity: 1;
+}
+
+/* Items styles */
+.itemsWrapper {
+  flex: 1;
+  overflow-y: auto;
+  height: calc(100% - var(--saved-paths-panel-height));
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar) transparent;
+}
+
+.itemsWrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.itemsWrapper::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+.itemsWrapper::-webkit-scrollbar-thumb {
+  background-color: var(--color-scrollbar);
+  border-radius: 4px;
+}
+
+.itemsWrapper::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-scrollbar-hover);
+}
+
+.itemsContainer {
+  padding: 0 1rem 3.5rem;
+}
+
+.itemsContainer > *:last-child {
+  margin-bottom: 1rem;
+}
+
+.item {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.4rem;
+  border-radius: var(--border-radius);
+  transition: all var(--transition-duration) var(--transition-timing);
+  cursor: pointer;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  line-height: var(--line-height-normal);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 3.5rem;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-normal);
+}
+
+.item:hover {
+  background-color: var(--color-bg-hover);
+  border-left-color: var(--color-accent);
+}
+
+.itemTitle {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.itemSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0.25rem 0 0;
+}
+
+.itemContent {
+  margin-top: 0.75rem;
+  font-size: var(--font-size-normal);
+}
+
+.itemSelected,
+.column.activeColumn .itemSelected {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-selected);
+  border-color: var(--color-border-selected);
+  border-left-color: var(--color-accent);
+}
+
+.itemSelected:hover {
+  background-color: var(--color-bg-selected);
+  border-left-color: var(--color-accent-hover);
+}
+
+.itemSelected .itemTitle,
+.column.activeColumn .itemSelected .itemTitle {
+  color: var(--color-text-primary);
+}
+
+.itemExpanded {
+  padding-bottom: 1rem;
+}
+
+/* Content section styles */
+.contentSection {
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-normal);
+}
+
+.contentSection:last-child {
+  margin-bottom: 0;
+}
+
+.contentSectionLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent);
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+}
+
+.contentSectionValue {
+  font-size: var(--font-size-small);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.contentSectionLongText {
+  font-size: var(--font-size-small);
+  color: var(--color-text-primary);
+}
+
+.contentSectionLongText p {
+  margin: 0 0 0.5rem 0;
+}
+
+.contentSectionLongText p:last-child {
+  margin-bottom: 0;
+}
+
+/* Saved paths panel styles */
+.savedPathsPanel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  background-color: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
+  height: var(--saved-paths-panel-height);
+  transition: margin-left var(--transition-duration) var(--transition-timing);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.savedPathsContainer {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  gap: 0.5rem;
+  overflow-x: auto;
+  height: 100%;
+}
+
+.pathButton,
+.resumePathButton,
+.savePathButton {
+  height: calc(var(--saved-paths-panel-height) - 1rem);
+  padding: 0 0.75rem;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all var(--transition-duration) var(--transition-timing);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  top: 0;
+}
+
+/* Unified hover effect for path buttons only */
+.pathButton:hover {
+  background-color: var(--color-bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Remove hover effect for resume and save buttons */
+.resumePathButton:hover,
+.savePathButton:hover:not(:disabled) {
+  background-color: var(--color-bg-hover);
+}
+
+/* Specific border colors for resume and save buttons */
+.resumePathButton {
+  border-left-color: var(--color-resume);
+  border-left-width: 3px;
+}
+
+.savePathButton {
+  border-left-color: var(--color-accent);
+  border-left-width: 3px;
+}
+
+.resumePathButton:hover {
+  border-color: var(--color-resume);
+}
+
+.savePathButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.sidePaneToggle,
+.resumePathButton,
+.savePathButton {
+  width: var(--saved-paths-panel-height);
+  height: var(--saved-paths-panel-height);
+  background-color: var(--color-bg-secondary);
+  border: none;
+  border-left: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all var(--transition-duration) var(--transition-timing);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  right: 0;
+  border-radius: 0;
+}
+
+.sidePaneToggle {
+  border-right: 1px solid var(--color-border);
+  border-left: none;
+}
+
+.resumePathButton {
+  color: var(--color-resume);
+}
+
+.savePathButton {
+  color: var(--color-accent);
+}
+
+.sidePaneToggle:hover,
+.resumePathButton:hover,
+.savePathButton:hover:not(:disabled) {
+  background-color: var(--color-bg-hover);
+}
+
+.savePathButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Refined scrollbar styles */
+.savedPathsContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.savedPathsContainer::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+  border-radius: 3px;
+}
+
+.savedPathsContainer::-webkit-scrollbar-thumb {
+  background-color: var(--color-scrollbar);
+  border-radius: 3px;
+  border: 2px solid var(--color-bg-secondary);
+}
+
+.savedPathsContainer::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-scrollbar-hover);
+}
+
+/* For Firefox */
+.savedPathsContainer {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar) var(--color-bg-secondary);
+}
+
+/* Debug panel styles */
+.debugPanel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  padding: 1rem;
+  max-width: 20rem;
+  border-top: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+}
+
+/* Utility classes */
+.itemTransition {
+  transition: max-height 500ms ease-out, padding-bottom 500ms ease-out;
+}
+
+/* Section styles */
+.section {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 0.5rem 0;
+  padding: 0.25rem 0;
+  border-bottom: none;
+  position: sticky;
+  top: 0;
+  background-color: var(--color-bg-secondary);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  height: 1.5rem;
+  opacity: 0.9;
+}
+
+.sectionTitle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--color-border);
+  opacity: 0.9;
+}
+
+.buttonText {
+  margin-left: 0.5rem;
+  font-size: var(--font-size-small);
+}
+
+.resumePathButton,
+.savePathButton {
+  width: auto;
+  padding: 0 1rem;
+  transition: background-color var(--transition-duration) var(--transition-timing);
+}
+
+.highlightedPath {
+  background-color: var(--color-bg-selected);
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.highlightedPath:hover {
+  background-color: var(--color-bg-selected);
+}
+
+.signOutButton {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-accent);
+  color: var(--color-text-primary);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-duration) var(--transition-timing);
+}
+
+.signOutButton:hover {
+  background-color: var(--color-accent-hover);
+}
+
+/* Add or update the main content wrapper styles */
+.mainContent {
+  transition: margin-left var(--transition-duration) var(--transition-timing);
+}
+
+/* Remove this class if it exists, as we no longer need to push the content */
+.mainContentShifted {
+  margin-left: var(--sidepane-width);
+}

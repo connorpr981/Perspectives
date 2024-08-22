@@ -53,18 +53,18 @@ class TranscriptProcessor:
         
         sentences = []
         original_sentences = self.tokenize(text)
-        cleaned_content = ""
+        content = text.strip()  # Keep the original content with newlines, titles, and links
+        
         for i, sent in enumerate(original_sentences):
             sentence = self.process_sentence(sent, i)
             sentences.append(sentence)
-            cleaned_content += sentence['clean_text'] + " "
 
         return {
             "index": index,
             "role": role,
             "speaker": speaker.strip(),
             "start_time": start_time,
-            "content": cleaned_content.strip(),
+            "content": content,  # Use the original content
             "sentences": sentences
         }
 
@@ -77,7 +77,7 @@ class TranscriptProcessor:
 
     def process_sentence(self, sentence: str, index: int) -> Dict:
         clean_text = self.clean_sentence(sentence)
-        extracted_info = self.extract_information(clean_text)
+        extracted_info = self.extract_information(sentence)  # Use original sentence for extraction
         return {
             'index': index,
             'original_text': sentence,

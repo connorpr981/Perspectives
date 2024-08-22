@@ -4,6 +4,7 @@ from openai import OpenAI
 from cohere import Client
 import instructor
 from pydantic import BaseModel
+from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 # Update these imports to use the new models folder
 from .models.message_models import Messages
@@ -20,7 +21,7 @@ class AIProviderClient:
             self.model_name = model or "claude-3-5-sonnet-20240620"
         elif provider == "openai":
             self.client = instructor.from_openai(OpenAI())
-            self.model_name = model or "gpt-4"
+            self.model_name = model or "gpt-4o"
         elif provider == "cohere":
             self.client = instructor.from_cohere(Client())
             self.model_name = model or "command-r-plus"
@@ -39,7 +40,11 @@ class AIProviderClient:
                 max_tokens=max_tokens,
                 messages=messages.to_api_format(),
                 response_model=response_model,
-                temperature=0.7
+                temperature=0.7,
+                max_retries=Retrying(
+                    stop=stop_after_attempt(3), 
+                    wait=wait_exponential(multiplier=1, min=4, max=30)
+                )
             )
 
             wrapper_response = PROVIDER_RESPONSE_MAP[self.provider].from_completion(
