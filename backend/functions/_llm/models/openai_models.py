@@ -1,11 +1,13 @@
 from typing import List, Literal, Optional, Any
-from pydantic import BaseModel, Field
-from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime, UTC
 import textwrap
 from .base_models import AIResponse
 
 class OpenAIFunctionCall(BaseModel):
     """Represents a function call in OpenAI responses."""
+    model_config = ConfigDict(populate_by_name=True)
+
     name: str
     arguments: str
 
@@ -17,6 +19,8 @@ class OpenAIFunctionCall(BaseModel):
 
 class OpenAIToolCall(BaseModel):
     """Represents a tool call in OpenAI responses."""
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str
     type: Literal["function"]
     function: OpenAIFunctionCall
@@ -29,6 +33,8 @@ class OpenAIToolCall(BaseModel):
 
 class OpenAIMessage(BaseModel):
     """Represents a message in OpenAI responses."""
+    model_config = ConfigDict(populate_by_name=True)
+
     role: Literal["assistant"]
     content: Optional[str] = None
     tool_calls: Optional[List[OpenAIToolCall]] = None
@@ -44,6 +50,8 @@ class OpenAIMessage(BaseModel):
 
 class OpenAIChoice(BaseModel):
     """Represents a choice in OpenAI responses."""
+    model_config = ConfigDict(populate_by_name=True)
+
     index: int
     message: OpenAIMessage
     finish_reason: str
@@ -55,6 +63,8 @@ class OpenAIChoice(BaseModel):
 
 class OpenAIUsage(BaseModel):
     """Represents token usage in OpenAI responses."""
+    model_config = ConfigDict(populate_by_name=True)
+
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
@@ -67,6 +77,8 @@ class OpenAIUsage(BaseModel):
 
 class OpenAIResponse(AIResponse):
     """Represents a completion response from the OpenAI API."""
+    model_config = ConfigDict(populate_by_name=True)
+
     object: Literal["chat.completion"] = Field(..., description="Object type")
     choices: List[OpenAIChoice] = Field(..., description="List of generated choices")
 
@@ -80,7 +92,7 @@ class OpenAIResponse(AIResponse):
         return cls(
             provider=provider,
             model=model,
-            created_at=datetime.fromtimestamp(completion.created),
+            created_at=datetime.fromtimestamp(completion.created).replace(tzinfo=UTC),
             total_tokens=completion.usage.total_tokens,
             prompt_tokens=completion.usage.prompt_tokens,
             completion_tokens=completion.usage.completion_tokens,

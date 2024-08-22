@@ -1,6 +1,7 @@
 from typing import Type, TypeVar, Tuple, Union
 from anthropic import Anthropic
 from openai import OpenAI
+from cohere import Client
 import instructor
 from pydantic import BaseModel
 
@@ -19,7 +20,10 @@ class AIProviderClient:
             self.model_name = model or "claude-3-5-sonnet-20240620"
         elif provider == "openai":
             self.client = instructor.from_openai(OpenAI())
-            self.model_name = model or "gpt-4o"
+            self.model_name = model or "gpt-4"
+        elif provider == "cohere":
+            self.client = instructor.from_cohere(Client())
+            self.model_name = model or "command-r-plus"
         else:
             raise ValueError(f"Invalid provider: {provider}")
 
@@ -35,6 +39,7 @@ class AIProviderClient:
                 max_tokens=max_tokens,
                 messages=messages.to_api_format(),
                 response_model=response_model,
+                temperature=0.7
             )
 
             wrapper_response = PROVIDER_RESPONSE_MAP[self.provider].from_completion(

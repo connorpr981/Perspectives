@@ -3,6 +3,7 @@ import requests
 import time
 from google.cloud import firestore
 import os
+import traceback
 
 BASE_URL = "http://127.0.0.1:5001/perspectives-f2e80/us-central1"
 TRANSCRIPTS = [
@@ -14,8 +15,7 @@ TRANSCRIPTS = [
 ]
 
 # Set up Firestore emulator
-os.environ["FIRESTORE_EMULATOR_HOST"] = "localhost:8080"
-db = firestore.Client(project="perspectives-f2e80")
+db = firestore.Client()
 
 def read_transcript(filename):
     url = f"{BASE_URL}/read_transcript_from_storage?filename={filename}"
@@ -28,11 +28,16 @@ def read_transcript(filename):
 
 def generate_sections(transcript_id):
     url = f"{BASE_URL}/generate_transcript_sections?transcript_id={transcript_id}"
-    response = requests.get(url)
-    if response.status_code == 200:
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # This will raise an HTTPError for bad responses
         print(f"Sections generated for transcript {transcript_id}")
-    else:
-        print(f"Error generating sections for transcript {transcript_id}: {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error generating sections for transcript {transcript_id}:")
+        print(f"HTTP Status Code: {e.response.status_code if hasattr(e, 'response') else 'N/A'}")
+        print(f"Response content: {e.response.text if hasattr(e, 'response') else 'N/A'}")
+        print("Traceback:")
+        print(traceback.format_exc())
 
 def get_transcript_ids_from_firestore():
     transcripts_ref = db.collection("transcripts")
@@ -56,7 +61,6 @@ def main():
             transcript_id = read_transcript(filename)
             if transcript_id:
                 transcript_ids.append(transcript_id)
-            time.sleep(1)  # Add a small delay between requests
 
     if args.generate:
         if not transcript_ids:
@@ -66,7 +70,10 @@ def main():
         print("Generating sections for transcripts...")
         for transcript_id in transcript_ids:
             generate_sections(transcript_id)
-            time.sleep(1)  # Add a small delay between requests
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"An unexpected error occurred:")
+        print(traceback.format_exc())

@@ -1,15 +1,17 @@
 from __future__ import annotations
 from typing import Literal, Optional, Dict, Any, Type
-from pydantic import BaseModel, Field
-from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime, UTC
 from abc import ABC, abstractmethod
 import textwrap
 from .message_models import Message
 
-ProviderLiteral = Literal["anthropic", "openai", "vertex"]
+ProviderLiteral = Literal["anthropic", "openai", "cohere"]
 
 class BaseResponseMetadata(BaseModel):
     """Base class for provider-agnostic response metadata."""
+    model_config = ConfigDict(populate_by_name=True)
+
     provider: ProviderLiteral
     model: str
     created_at: datetime
@@ -29,6 +31,8 @@ class BaseResponseMetadata(BaseModel):
 
 class AIResponse(BaseResponseMetadata, ABC):
     """Abstract base class for AI responses with common functionality."""
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str = Field(..., description="Unique identifier for the response")
     response_model_dump: Optional[Dict[str, Any]] = None
 

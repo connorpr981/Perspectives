@@ -1,12 +1,14 @@
 from typing import List, Literal, Optional, Dict, Any, Union
-from pydantic import BaseModel, Field
-from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime, UTC
 import json
 import textwrap
 from .base_models import AIResponse
 
 class AnthropicTextContent(BaseModel):
     """Represents text content in Anthropic responses."""
+    model_config = ConfigDict(populate_by_name=True)
+
     type: Literal["text"]
     text: str
 
@@ -15,6 +17,8 @@ class AnthropicTextContent(BaseModel):
 
 class AnthropicToolUseContent(BaseModel):
     """Represents tool use content in Anthropic responses."""
+    model_config = ConfigDict(populate_by_name=True)
+
     type: Literal["tool_use"]
     id: str
     name: str
@@ -31,11 +35,15 @@ AnthropicContent = Union[AnthropicTextContent, AnthropicToolUseContent]
 
 class AnthropicUsage(BaseModel):
     """Represents token usage in Anthropic responses."""
+    model_config = ConfigDict(populate_by_name=True)
+
     input_tokens: int
     output_tokens: int
 
 class AnthropicResponse(AIResponse):
     """Represents a completion response from the Anthropic API."""
+    model_config = ConfigDict(populate_by_name=True)
+
     content: List[AnthropicContent] = Field(..., description="List of content items in the response")
     role: Literal["assistant"] = Field(..., description="Role of the message sender")
     stop_reason: Optional[str] = Field(None, description="Reason for stopping the generation")
@@ -52,7 +60,7 @@ class AnthropicResponse(AIResponse):
         return cls(
             provider=provider,
             model=model,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             total_tokens=completion.usage.input_tokens + completion.usage.output_tokens,
             prompt_tokens=completion.usage.input_tokens,
             completion_tokens=completion.usage.output_tokens,

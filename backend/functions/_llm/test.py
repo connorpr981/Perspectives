@@ -33,9 +33,11 @@ class BookRecommendation(BaseModel):
 def api_keys():
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
+    cohere_key = os.getenv("COHERE_API_KEY")
     assert anthropic_key is not None, "ANTHROPIC_API_KEY is not set"
     assert openai_key is not None, "OPENAI_API_KEY is not set"
-    return {"anthropic": anthropic_key, "openai": openai_key}
+    assert cohere_key is not None, "COHERE_API_KEY is not set"
+    return {"anthropic": anthropic_key, "openai": openai_key, "cohere": cohere_key}
 
 @pytest.fixture(scope="module")
 def messages():
@@ -66,7 +68,7 @@ def test_messages(messages):
     messages.clear()
     assert len(messages.messages) == 0
 
-@pytest.mark.parametrize("provider", ["anthropic", "openai"])
+@pytest.mark.parametrize("provider", ["anthropic", "openai", "cohere"])
 def test_ai_response(messages, provider):
     # Test 1: User information extraction
     messages.add_user_message("Extract the following: Jason is 25 years old.")
@@ -193,7 +195,7 @@ def test_large_message_performance():
     assert len(messages.messages) == 1
     assert end_time - start_time < 1  # Assuming it should process within 1 second
 
-@pytest.mark.parametrize("provider", ["anthropic", "openai"])
+@pytest.mark.parametrize("provider", ["anthropic", "openai", "cohere"])
 def test_error_handling(messages, provider):
     # Test with invalid API key
     with pytest.raises(Exception):  # Replace with specific exception if known
@@ -209,7 +211,7 @@ def test_error_handling(messages, provider):
     with pytest.raises(Exception):  # Replace with specific exception if known
         get_response(provider, messages, int)  # Using 'int' as an invalid model type
 
-@pytest.mark.parametrize("provider", ["anthropic", "openai"])
+@pytest.mark.parametrize("provider", ["anthropic", "openai", "cohere"])
 def test_cross_provider_consistency(messages, provider):
     messages.clear()
     messages.add_user_message("What is the capital of France?")
@@ -263,3 +265,14 @@ def test_metadata_extraction(messages):
     assert metadata.total_tokens == wrapper.total_tokens
     assert metadata.prompt_tokens == wrapper.prompt_tokens
     assert metadata.completion_tokens == wrapper.completion_tokens
+
+def test_cohere_specific_functionality(messages):
+    messages.clear()
+    messages.add_user_message("Extract the following: Jason is 25 years old.")
+    response, wrapper = get_response("cohere", messages, User)
+    
+    assert isinstance(response, User)
+    assert response.name == "Jason"
+    assert response.age == 25
+    assert wrapper.provider == "cohere"
+    assert wrapper.model.startswith("command")  # Assuming the default model is used

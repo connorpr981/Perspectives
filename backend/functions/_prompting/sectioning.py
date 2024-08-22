@@ -2,19 +2,13 @@ from typing import Any, Dict, List
 from pydantic import BaseModel, Field
 from _llm.models.message_models import Messages
 from _llm.llm_processing import get_response
+import traceback
 
 ### RESPONSE MODELS ###
 
 class Section(BaseModel):
     """
     Represents a section of the interview transcript.
-
-    Attributes:
-        title (str): An analytical, objective title summarizing the section's main theme.
-        subtitle (str): A brief, interpretive description of the section's content.
-        description (str): A one-sentence summary of the section's key points.
-        start_turn (int): The turn number where this section begins.
-        end_turn (int): The turn number where this section ends.
     """
     title: str = Field(..., description="Analytical, objective title summarizing the section's main theme")
     subtitle: str = Field(..., description="Brief, interpretive description of the section's content")
@@ -25,9 +19,6 @@ class Section(BaseModel):
 class StructuredTranscript(BaseModel):
     """
     Represents the entire structured transcript divided into sections.
-
-    Attributes:
-        sections (List[Section]): A list of Section objects representing the structured transcript.
     """
     sections: List[Section] = Field(..., description="List of sections representing the structured transcript")
 
@@ -40,15 +31,6 @@ class Criticism(BaseModel):
     - Clear thematic boundaries between sections
     - Analytical, objective titles and descriptions
     - A logical progression of topics throughout the interview
-
-    Attributes:
-        overall_assessment (str): A concise evaluation of the transcript's structure, highlighting adherence to the ideal structure and primary areas for improvement.
-        thematic_integrity (str): Analysis of how well each section maintains a cohesive theme, identifying any that are too broad or narrow.
-        section_length (str): Evaluation of section lengths, noting any that are too short (less than 4 turns) or too long (more than 16 turns).
-        content_representation (str): Assessment of how accurately and objectively titles, subtitles, and descriptions reflect section content.
-        narrative_flow (str): Insights into how well the structure captures the logical progression and interconnection of topics throughout the interview.
-        balance (str): Analysis of the overall distribution of sections, focusing on adherence to the 4-16 turn guideline and identifying any imbalances or bloated sections.
-        key_improvements (List[str]): Prioritized list of specific, actionable recommendations to enhance the transcript's structure, focusing on achieving the ideal balance.
     """
     overall_assessment: str = Field(..., description="Concise evaluation highlighting adherence to the ideal structure and primary areas for improvement")
     thematic_integrity: str = Field(..., description="Analysis of thematic cohesion within sections, identifying any that are too broad or narrow")
@@ -61,12 +43,6 @@ class Criticism(BaseModel):
 class ThemeGuide(BaseModel):
     """
     Represents a high-level guide to the structure and themes of the interview.
-
-    Attributes:
-        overall_structure (str): A brief overview of the interview's structure and flow.
-        main_themes (List[str]): A list of the primary themes or topics discussed in the interview.
-        theme_progression (str): A description of how themes evolve and interconnect throughout the interview.
-        key_points (List[str]): A list of the most significant points or insights from the interview.
     """
     overall_structure: str = Field(..., description="Brief overview of the interview's structure and flow")
     main_themes: List[str] = Field(..., description="List of primary themes or topics discussed")
@@ -194,61 +170,66 @@ def get_sections(transcript_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     then sending a prompt to the LLM to get the sections,
     then requesting criticism, and finally generating an improved version.
     """
-    formatted_transcript = format_transcript_for_sectioning(transcript_data)
-    
-    # Step 1: Generate Theme Guide
-    theme_guide_messages = Messages()
-    theme_guide_messages.add_system_message(SECTIONING_SYSTEM_PROMPT)
-    theme_guide_messages.add_user_message(THEME_GUIDE_PROMPT.format(formatted_transcript=formatted_transcript))
-    
-    theme_guide, _ = get_response(
-        provider="openai",
-        messages=theme_guide_messages,
-        response_model=ThemeGuide,
-    )
-    
-    # Step 2: Initial structuring
-    sectioning_messages = Messages()
-    sectioning_messages.add_system_message(SECTIONING_SYSTEM_PROMPT)
-    sectioning_messages.add_user_message(f"""
-    Here's a high-level guide to the structure and themes of the interview:
-    {theme_guide.model_dump_json(indent=2)}
-    
-    Using this guide, please structure the following transcript:
-    
-    {SECTIONING_USER_PROMPT.format(formatted_transcript=formatted_transcript)}
-    """)
-    
-    initial_response, _ = get_response(
-        provider="openai",
-        messages=sectioning_messages,
-        response_model=StructuredTranscript,
-    )
-    sectioning_messages.add_assistant_message(initial_response.model_dump_json(indent=2))
-    
-    # Step 3: Criticism
-    criticism_messages = Messages()
-    criticism_messages.add_system_message(SECTIONING_SYSTEM_PROMPT)
-    criticism_messages.add_user_message(CRITICISM_PROMPT.format(
-        formatted_transcript=formatted_transcript,
-        structured_transcript=initial_response.model_dump_json(indent=2)
-    ))
-    
-    criticism_response, _ = get_response(
-        provider="openai",
-        messages=criticism_messages,
-        response_model=Criticism,
-    )
-    
-    # Step 4: Final structuring
-    sectioning_messages.add_user_message(FINAL_SECTIONING_PROMPT.format(
-        criticism=criticism_response.model_dump_json(indent=2)
-    ))
-    
-    final_response, _ = get_response(
-        provider="openai",
-        messages=sectioning_messages,
-        response_model=StructuredTranscript,
-    )
-    
-    return final_response.model_dump()['sections']
+    try:
+        formatted_transcript = format_transcript_for_sectioning(transcript_data)
+        
+        # Step 1: Generate Theme Guide
+        theme_guide_messages = Messages()
+        theme_guide_messages.add_system_message(SECTIONING_SYSTEM_PROMPT)
+        theme_guide_messages.add_user_message(THEME_GUIDE_PROMPT.format(formatted_transcript=formatted_transcript))
+        
+        theme_guide, _ = get_response(
+            provider="anthropic",
+            messages=theme_guide_messages,
+            response_model=ThemeGuide,
+        )
+        
+        # Step 2: Initial structuring
+        sectioning_messages = Messages()
+        sectioning_messages.add_system_message(SECTIONING_SYSTEM_PROMPT)
+        sectioning_messages.add_user_message(f"""
+        Here's a high-level guide to the structure and themes of the interview:
+        {theme_guide.model_dump_json(indent=2)}
+        
+        Using this guide, please structure the following transcript:
+        
+        {SECTIONING_USER_PROMPT.format(formatted_transcript=formatted_transcript)}
+        """)
+        
+        initial_response, _ = get_response(
+            provider="anthropic",
+            messages=sectioning_messages,
+            response_model=StructuredTranscript,
+        )
+        sectioning_messages.add_assistant_message(initial_response.model_dump_json(indent=2))
+        
+        # Step 3: Criticism
+        criticism_messages = Messages()
+        criticism_messages.add_system_message(SECTIONING_SYSTEM_PROMPT)
+        criticism_messages.add_user_message(CRITICISM_PROMPT.format(
+            formatted_transcript=formatted_transcript,
+            structured_transcript=initial_response.model_dump_json(indent=2)
+        ))
+        
+        criticism_response, _ = get_response(
+            provider="anthropic",
+            messages=criticism_messages,
+            response_model=Criticism,
+        )
+        
+        # Step 4: Final structuring
+        sectioning_messages.add_user_message(FINAL_SECTIONING_PROMPT.format(
+            criticism=criticism_response.model_dump_json(indent=2)
+        ))
+        
+        final_response, _ = get_response(
+            provider="anthropic",
+            messages=sectioning_messages,
+            response_model=StructuredTranscript,
+        )
+        
+        return final_response.model_dump()['sections']
+    except Exception as e:
+        print(f"Error in get_sections:")
+        print(traceback.format_exc())
+        raise
