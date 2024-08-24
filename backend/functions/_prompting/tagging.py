@@ -76,7 +76,7 @@ def get_tags(transcript_data: Dict[str, Any]) -> List[Dict[str, Any]]:
                 tagging_messages.add_user_message(f"Tag the following transcript chunk: {chunk_transcript}")
                         
             chunk_tags, _ = get_response(
-                provider="openai",
+                provider="anthropic",
                 messages=tagging_messages,
                 response_model=TurnTags
             )

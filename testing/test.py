@@ -4,6 +4,7 @@ from google.cloud import firestore
 import traceback
 import os
 import random
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 BASE_URL = "http://127.0.0.1:5001/perspectives-f2e80/us-central1"
 TRANSCRIPTS = [
@@ -90,6 +91,12 @@ def print_firestore_data():
         
         print("---")
 
+def process_transcript(transcript_id, args):
+    if args.section:
+        generate_sections(transcript_id)
+    if args.tag:
+        generate_tags(transcript_id)
+
 def main():
     parser = argparse.ArgumentParser(description="Process transcripts and generate sections")
     parser.add_argument("--read", action="store_true", help="Read transcripts from storage")
@@ -124,19 +131,18 @@ def main():
             print("Shuffling transcript order...")
             random.shuffle(transcript_ids)
         
-    if args.section:
-        print(f"Generating sections for {'all transcripts' if args.all else 'one transcript'}...")
-        for transcript_id in transcript_ids:
-            generate_sections(transcript_id)
-            if not args.all:
-                break
-
-    if args.tag:
-        print(f"Generating tags for {'all transcripts' if args.all else 'one transcript'}...")
-        for transcript_id in transcript_ids:
-            generate_tags(transcript_id)
-            if not args.all:
-                break
+        if args.all:
+            print(f"Processing all transcripts with 5 workers...")
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = [executor.submit(process_transcript, transcript_id, args) for transcript_id in transcript_ids]
+                for future in as_completed(futures):
+                    try:
+                        future.result()]
+                    except Exception as e:
+                        print(f"An error occurred while processing a transcript: {str(e)}")
+        else:
+            print(f"Processing one transcript...")
+            process_transcript(transcript_ids[0], args)
 
     if args.print:
         print_firestore_data()

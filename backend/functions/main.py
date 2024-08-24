@@ -8,8 +8,19 @@ from _prompting.tagging import get_tags
 from _prompting.sectioning import get_sections
 
 from _helpers.transcript_helper import create_firestore_transcript, get_transcript_data, update_firestore_with_sections, update_firestore_with_tags
+from _helpers.tag_helper import create_tag_index, create_tags_collection
 
 app = initialize_app()
+
+
+
+
+
+
+
+
+
+
 
 @https_fn.on_request()
 def read_transcript_from_storage(req: https_fn.Request) -> https_fn.Response:
@@ -31,7 +42,7 @@ def read_transcript_from_storage(req: https_fn.Request) -> https_fn.Response:
 )
 def get_turn_tags(req: https_fn.Request) -> https_fn.Response:
     """
-    Generate tags (action, people, places, things) for each turn in the transcript and update Firestore.
+    Generate tags for each turn in the transcript, update Firestore, and create a tag index.
     """
     transcript_id = req.args.get("transcript_id")
     if not transcript_id:
@@ -40,11 +51,20 @@ def get_turn_tags(req: https_fn.Request) -> https_fn.Response:
     try:
         transcript_data = get_transcript_data(transcript_id)
         tags = get_tags(transcript_data)
+        
+        # Create tag index
+        tag_index = create_tag_index(tags, transcript_id)
+        
+        # Update Firestore with tags
         update_firestore_with_tags(transcript_id, tags)
-        return https_fn.Response(f"Transcript tags created for ID: {transcript_id}")
+        
+        # Create tags collection
+        create_tags_collection(tag_index)
+        
+        return https_fn.Response(f"Transcript tags and index created for ID: {transcript_id}")
     except Exception as e:
         import traceback
-        error_message = f"Error getting transcript tags: {str(e)}\n{traceback.format_exc()}"
+        error_message = f"Error processing transcript tags: {str(e)}\n{traceback.format_exc()}"
         print(error_message)  # This will log the full error trace
         return https_fn.Response(error_message, status=500)
 

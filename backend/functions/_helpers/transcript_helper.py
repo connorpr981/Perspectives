@@ -85,13 +85,12 @@ def update_firestore_with_tags(transcript_id: str, tags: List[Dict[str, Any]]) -
     
     for tag in tags:
         turn_index = tag.turn_index
-        turn_ref = transcript_ref.collection('turns').where('index', '==', turn_index).stream()
+        turn_ref = transcript_ref.collection('turns').document(f'turn_{turn_index}')
         
-        for turn in turn_ref:
-            turn_data = turn.to_dict()
-            turn_data['action'] = tag.action
-            turn_data['key_terms'] = tag.key_terms
-            update_document(f'transcripts/{transcript_id}/turns', turn.id, turn_data)
+        turn_data = turn_ref.get().to_dict()
+        turn_data['action'] = tag.action
+        turn_data['key_terms'] = tag.key_terms
+        turn_ref.set(turn_data, merge=True)
     
     # Update the 'tagged' flag in the main transcript document
     update_document('transcripts', transcript_id, {'tagged': True})

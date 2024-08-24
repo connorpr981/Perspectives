@@ -5,8 +5,8 @@ from cohere import Client
 import instructor
 from pydantic import BaseModel
 from tenacity import Retrying, stop_after_attempt, wait_exponential
+import os
 
-# Update these imports to use the new models folder
 from .models.message_models import Messages
 from .models.base_models import AIResponse
 from .models import PROVIDER_RESPONSE_MAP
@@ -25,6 +25,9 @@ class AIProviderClient:
         elif provider == "cohere":
             self.client = instructor.from_cohere(Client())
             self.model_name = model or "command-r-plus"
+        elif provider == "perplexity":
+            self.client = instructor.from_openai(OpenAI(base_url="https://api.perplexity.ai", api_key=os.getenv("PERPLEXITY_API_KEY")))
+            self.model_name = model or "llama-3-sonar-large-32k-online"
         else:
             raise ValueError(f"Invalid provider: {provider}")
 
