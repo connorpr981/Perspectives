@@ -78,7 +78,7 @@ def create_firestore_transcript(transcript_data: List[Dict[str, Any]], filename:
 
 def update_firestore_with_tags(transcript_id: str, tags: List[Dict[str, Any]]) -> None:
     """
-    Adds the tag (action, people, places, things) to the firestore document for each turn and updates the 'tagged' flag.
+    Adds the tag (action and key_terms) to the firestore document for each turn and updates the 'tagged' flag.
     """
     db = get_firestore_client()
     transcript_ref = db.collection('transcripts').document(transcript_id)
@@ -90,9 +90,7 @@ def update_firestore_with_tags(transcript_id: str, tags: List[Dict[str, Any]]) -
         for turn in turn_ref:
             turn_data = turn.to_dict()
             turn_data['action'] = tag.action
-            turn_data['people'] = tag.people
-            turn_data['places'] = tag.places
-            turn_data['things'] = tag.things
+            turn_data['key_terms'] = tag.key_terms
             update_document(f'transcripts/{transcript_id}/turns', turn.id, turn_data)
     
     # Update the 'tagged' flag in the main transcript document

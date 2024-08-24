@@ -93,9 +93,10 @@ def print_firestore_data():
 def main():
     parser = argparse.ArgumentParser(description="Process transcripts and generate sections")
     parser.add_argument("--read", action="store_true", help="Read transcripts from storage")
-    parser.add_argument("--section", action="store_true", help="Generate sections for one transcript")
+    parser.add_argument("--section", action="store_true", help="Generate sections for transcripts")
     parser.add_argument("--tag", action="store_true", help="Generate tags for transcripts")
     parser.add_argument("--print", action="store_true", help="Print Firestore data")
+    parser.add_argument("--all", action="store_true", help="Process all transcripts instead of just one")
     args = parser.parse_args()
 
     if not (args.read or args.section or args.tag or args.print):
@@ -109,31 +110,33 @@ def main():
             transcript_id = read_transcript(filename)
             if transcript_id:
                 transcript_ids.append(transcript_id)
+        if not args.all:
+            transcript_ids = [random.choice(transcript_ids)]
 
-    if args.section:
+    if args.section or args.tag:
         if not transcript_ids:
             print("Fetching transcript IDs from Firestore...")
             transcript_ids = get_transcript_ids_from_firestore()
         
-        print("Shuffling transcript order...")
-        random.shuffle(transcript_ids)
+        if not args.all:
+            transcript_ids = [random.choice(transcript_ids)]
+        else:
+            print("Shuffling transcript order...")
+            random.shuffle(transcript_ids)
         
-        print("Generating sections for one transcript...")
+    if args.section:
+        print(f"Generating sections for {'all transcripts' if args.all else 'one transcript'}...")
         for transcript_id in transcript_ids:
-            if generate_sections(transcript_id):
-                break  # Stop after successfully sectioning one transcript
+            generate_sections(transcript_id)
+            if not args.all:
+                break
 
     if args.tag:
-        if not transcript_ids:
-            print("Fetching transcript IDs from Firestore...")
-            transcript_ids = get_transcript_ids_from_firestore()
-        
-        print("Shuffling transcript order...")
-        random.shuffle(transcript_ids)
-        
-        print("Generating tags for transcripts...")
+        print(f"Generating tags for {'all transcripts' if args.all else 'one transcript'}...")
         for transcript_id in transcript_ids:
             generate_tags(transcript_id)
+            if not args.all:
+                break
 
     if args.print:
         print_firestore_data()
@@ -144,5 +147,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"An unexpected error occurred: {str(e)}")
         print(traceback.format_exc())
-    finally:
-        print_firestore_data()
