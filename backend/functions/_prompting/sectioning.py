@@ -21,7 +21,7 @@ class Section(BaseModel):
     subtitle: str = Field(..., description="A brief (10-15 words) elaboration on the title")
     description: str = Field(..., description="A summary (2-3 sentences) of the section's content")
     start_turn: int = Field(..., description="Index of the first turn in this section (must be a host turn)")
-    end_turn: int = Field(..., description="Index of the last turn in this section (must be a guest turn at least 5 turns after the start turn)")
+    end_turn: int = Field(..., description="Index of the last turn in this section (must be a guest turn)")
 
     @property
     def length(self) -> int:
@@ -41,26 +41,38 @@ class StructuredTranscript(BaseModel):
 
 ### PROMPTS ###
 
-SECTIONING_SYSTEM_PROMPT = """You are an expert in content analysis and thematic structuring. Your task is to divide an interview transcript into meaningful sections.
+SECTIONING_SYSTEM_PROMPT = """You are an expert in content analysis and thematic structuring. Your task is to divide a podcast interview transcript into meaningful sections.
 
 Guidelines:
 1. Divide the transcript into sections based on primary themes and content.
 2. Each section must begin with a host turn and end with a guest turn.
-3. Sections should be 6-12 turns long.
-4. For each section, provide:
-   - A concise (3-7 words) title
-   - A brief (10-15 words) subtitle
-   - A summary (2-3 sentences) of the content
-   - The start turn index (must be a host turn)
-   - The end turn index (must be a guest turn)
-5. Focus on the logical progression of the conversation and core ideas presented.
-6. The first section should start with turn 0, and the last section should end with the last turn in the transcript.
+3. Group turns primarily by content and thematic coherence.
+4. Sections should be between 8-12 turns long, whichever length makes most sense based on the context.
+5. There should be absolutely no sections shorter than 4 turns.
+6. Be attentive to natural topic transitions, which often occur when the host asks a new question.
+7. Consider the flow of the conversation and how ideas develop throughout the interview.
+8. Recognize that some topics may be revisited or expanded upon later in the interview; these can be separate sections if substantial new information is added.
+9. Be aware of segment breaks, introductions, or conclusions that may be present in the podcast format.
+10. For each section, provide:
+    - A concise (3-7 words) title
+    - A brief (10-15 words) subtitle
+    - A summary (2-3 sentences) of the content
+    - The start turn index (must be a host turn)
+    - The end turn index (must be a guest turn)
+11. Focus on the logical progression of the conversation and core ideas presented.
+12. The first section should start with turn 0, and the last section should end with the last turn in the transcript.
+13. Pay attention to key terms mentioned in each turn, as they may indicate important topics or themes.
+14. If a thematic break occurs slightly before or after the 8-12 turn range, prioritize the thematic coherence over strict adherence to the turn count.
+15. In cases where a section would exceed 12 turns, look for the most natural breaking point within the 8-12 turn range.
+
+Remember: The goal is to create meaningful, coherent sections that accurately represent the content and flow of the interview while adhering to the specified turn count guidelines.
 """
 
 SECTIONING_USER_PROMPT = """Analyze the following interview transcript and divide it into sections according to the guidelines provided. Structure your response using the StructuredTranscript model.
 
 Each turn in the transcript is formatted as:
 [Turn X] Role (Speaker): Action
+(Optional) Key Terms: List of key terms mentioned in the turn, if any
 Text: Full text of the turn
 
 Use both the action summary and the full text for sectioning. Provide the start and end turn indices for each section.
@@ -75,8 +87,16 @@ Transcript:
 def format_transcript_for_sectioning(transcript_data: Dict[str, Any]) -> str:
     formatted_turns = []
     for turn in transcript_data['turns']:
+        index = turn['index']
+        role = turn['role']
+        speaker = turn['speaker']
+        action = turn['action']
+        key_terms = ", ".join(turn['key_terms']) if turn['key_terms'] else "None"
         full_text = " ".join([sentence['clean_text'] for sentence in turn['sentences']])
-        formatted_turn = f"[Turn {turn['index']}] {turn['role']} ({turn['speaker']}): {turn['action']}\nText: {full_text}"
+        if key_terms:
+            formatted_turn = f"[Turn {index}] {role} ({speaker}): {action}\nKey Terms: {key_terms}\nText: {full_text}"
+        else:
+            formatted_turn = f"[Turn {index}] {role} ({speaker}): {action}\nText: {full_text}"
         formatted_turns.append(formatted_turn)
     return "\n\n".join(formatted_turns)
 

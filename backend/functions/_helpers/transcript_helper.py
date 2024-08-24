@@ -1,5 +1,6 @@
 from typing import Dict, Any, List
 from _utils.firestore_utils import get_firestore_client, delete_collection, get_document, update_document, create_subcollection_document
+import logging
 
 def get_transcript_data(transcript_id: str) -> Dict[str, Any]:
     transcript_data = get_document('transcripts', transcript_id)
@@ -83,14 +84,37 @@ def update_firestore_with_tags(transcript_id: str, tags: List[Dict[str, Any]]) -
     db = get_firestore_client()
     transcript_ref = db.collection('transcripts').document(transcript_id)
     
+    # Fetch all turns for this transcript
+    turns = transcript_ref.collection('turns').get()
+    turn_dict = {turn.to_dict()['index']: turn.reference for turn in turns}
+    
     for tag in tags:
         turn_index = tag.turn_index
-        turn_ref = transcript_ref.collection('turns').document(f'turn_{turn_index}')
+        if turn_index not in turn_dict:
+            logging.warning(f"Turn with index {turn_index} not found in transcript {transcript_id}")
+            continue
         
-        turn_data = turn_ref.get().to_dict()
-        turn_data['action'] = tag.action
-        turn_data['key_terms'] = tag.key_terms
-        turn_ref.set(turn_data, merge=True)
+        turn_ref = turn_dict[turn_index]
+        
+        try:
+            turn_doc = turn_ref.get()
+            if not turn_doc.exists:
+                logging.warning(f"Turn document not found for index {turn_index} in transcript {transcript_id}")
+                continue
+
+            turn_data = turn_doc.to_dict()
+            if turn_data is None:
+                logging.warning(f"Turn data is None for index {turn_index} in transcript {transcript_id}")
+                continue
+
+            turn_data['action'] = tag.action
+            turn_data['key_terms'] = tag.key_terms
+            turn_ref.set(turn_data, merge=True)
+        except Exception as e:
+            logging.error(f"Error updating turn {turn_index} in transcript {transcript_id}: {str(e)}")
     
     # Update the 'tagged' flag in the main transcript document
-    update_document('transcripts', transcript_id, {'tagged': True})
+    try:
+        update_document('transcripts', transcript_id, {'tagged': True})
+    except Exception as e:
+        logging.error(f"Error updating 'tagged' flag for transcript {transcript_id}: {str(e)}")

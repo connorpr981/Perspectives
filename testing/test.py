@@ -137,7 +137,7 @@ def main():
                 futures = [executor.submit(process_transcript, transcript_id, args) for transcript_id in transcript_ids]
                 for future in as_completed(futures):
                     try:
-                        future.result()]
+                        future.result()
                     except Exception as e:
                         print(f"An error occurred while processing a transcript: {str(e)}")
         else:
