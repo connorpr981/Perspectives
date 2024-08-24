@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from _utils.firestore_utils import get_firestore_client
 from google.cloud.firestore_v1 import WriteBatch
 import logging
+from datetime import datetime
 
 def create_tag_index(tags: List[BaseModel], transcript_id: str) -> Dict[str, List[DocumentReference]]:
     """
@@ -36,15 +37,10 @@ def create_tag_index(tags: List[BaseModel], transcript_id: str) -> Dict[str, Lis
             
             # Process links
             links = extracted_info.get('links', {})
-            for link_text, link_url in links.items():
+            for link_text, _ in links.items():
                 if link_text not in tag_index:
                     tag_index[link_text] = []
                 tag_index[link_text].append(turn_ref)
-                
-                # Also add the URL as a separate tag
-                if link_url not in tag_index:
-                    tag_index[link_url] = []
-                tag_index[link_url].append(turn_ref)
             
             # Process titles
             titles = extracted_info.get('titles', [])
@@ -74,6 +70,8 @@ def create_tags_collection(tag_index: Dict[str, List[DocumentReference]]) -> Non
             existing_tag_query = tags_collection.where('term', '==', key_term).limit(1)
             existing_tag_docs = existing_tag_query.get()
             
+            current_time = datetime.utcnow()
+            
             if existing_tag_docs:
                 # Update existing tag document
                 existing_tag = existing_tag_docs[0]
@@ -83,7 +81,8 @@ def create_tags_collection(tag_index: Dict[str, List[DocumentReference]]) -> Non
                 updated_refs = list(existing_refs.union(new_refs))
                 
                 batch.update(existing_tag.reference, {
-                    'turn_refs': [{'turn_ref': ref} for ref in updated_refs]
+                    'turn_refs': [{'turn_ref': ref} for ref in updated_refs],
+                    'last_updated': current_time
                 })
                 logging.info(f"Queued update for existing tag: {key_term}")
             else:
@@ -91,7 +90,8 @@ def create_tags_collection(tag_index: Dict[str, List[DocumentReference]]) -> Non
                 new_tag_ref = tags_collection.document()
                 batch.set(new_tag_ref, {
                     'term': key_term,
-                    'turn_refs': [{'turn_ref': ref} for ref in turn_refs]
+                    'turn_refs': [{'turn_ref': ref} for ref in turn_refs],
+                    'last_updated': current_time
                 })
                 logging.info(f"Queued creation of new tag: {key_term}")
         except Exception as e:
@@ -158,8 +158,8 @@ def process_transcript_tags(transcript_id: str, generate_tag_context_func: Calla
         updated_turn_refs = []
 
         for turn_ref in tag_data['turn_refs']:
-            if turn_ref.parent.parent == transcript_ref:  # Check if the turn belongs to this transcript
-                turn_doc = turn_ref.get()
+            if turn_ref['turn_ref'].parent.parent == transcript_ref:  # Check if the turn belongs to this transcript
+                turn_doc = turn_ref['turn_ref'].get()
                 turn_data = turn_doc.to_dict()
                 turn_content = turn_data.get('content', '')
 
@@ -167,7 +167,7 @@ def process_transcript_tags(transcript_id: str, generate_tag_context_func: Calla
                 tag_context = generate_tag_context_func(tag_term, turn_content)
 
                 # Update the turn document with the tag context
-                turn_ref.update({
+                turn_ref['turn_ref'].update({
                     'tag_contexts': {
                         tag_term: tag_context.model_dump()
                     }
@@ -175,13 +175,14 @@ def process_transcript_tags(transcript_id: str, generate_tag_context_func: Calla
 
                 # Create a new structure for the turn reference in the tag document
                 updated_turn_refs.append({
-                    'turn_ref': turn_ref,
+                    'turn_ref': turn_ref['turn_ref'],
                     'context': tag_context.model_dump()
                 })
 
-        # Update the tag document with the new turn references structure
+        # Update the tag document with the new turn references structure and last_updated timestamp
         tag.reference.update({
-            'turn_refs': updated_turn_refs
+            'turn_refs': updated_turn_refs,
+            'last_updated': datetime.utcnow()
         })
         
         logging.info(f"Processed tag '{tag_term}' for transcript {transcript_id}")
