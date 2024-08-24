@@ -59,7 +59,7 @@ const PathBasedLayoutPage: React.FC = () => {
         setIsLoading(true);
         setFetchError(null);
         try {
-          const transcriptId = 'uKDynz0EI9oBziHdWj51'; // Hardcoded ID for testing with emulator
+          const transcriptId = 'hYrlvYtIjjX9PEm2CjKe'; // Hardcoded ID for testing with emulator
           console.log('Fetching transcript with ID:', transcriptId);
           const data = await fetchTranscriptData(transcriptId);
           console.log('Fetched data:', data);

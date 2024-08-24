@@ -1,5 +1,5 @@
 export type ContentSection = {
-  type: 'text' | 'longText';
+  type: 'text' | 'longText' | 'markdown';
   label: string;
   value: string;
 };
@@ -10,6 +10,7 @@ export type ItemType = {
   content: ContentSection[];
   children?: ItemType[];
   section?: string;
+  turn_indices?: number[];
 };
 
 export type PathType = number[];

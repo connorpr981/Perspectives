@@ -9,26 +9,30 @@ import traceback
 class Section(BaseModel):
     """
     Represents a section of the interview transcript.
+    
+    Attributes:
+        title (str): Concise phrase capturing the section's main theme.
+        subtitle (str): Brief elaboration on the title.
+        description (str): Summary of the section's content.
+        start_turn (int): Index of the first turn in this section.
+        end_turn (int): Index of the last turn in this section.
     """
     title: str = Field(..., description="Concise (3-7 words) phrase capturing the section's main theme")
     subtitle: str = Field(..., description="A brief (10-15 words) elaboration on the title")
     description: str = Field(..., description="A summary (2-3 sentences) of the section's content")
-    start_turn: int = Field(..., description="Turn index where this section begins (must be a host turn)")
-    end_turn: int = Field(..., description="Turn index where this section ends (must be a guest turn)")
+    start_turn: int = Field(..., description="Index of the first turn in this section (must be a host turn)")
+    end_turn: int = Field(..., description="Index of the last turn in this section (must be a guest turn at least 5 turns after the start turn)")
+
+    @property
+    def length(self) -> int:
+        return self.end_turn - self.start_turn + 1
 
     def __str__(self) -> str:
-        return f"""
-## {self.title}
-### {self.subtitle}
-
-{self.description}
-
-Turns: {self.start_turn} - {self.end_turn}
-"""
+        return f"## {self.title}\n### {self.subtitle}\n\n{self.description}\n\nTurns: {self.start_turn} - {self.end_turn} (Length: {self.length})"
 
 class StructuredTranscript(BaseModel):
     """
-    Represents the entire structured transcript divided into sections.
+    Represents the entire structured transcript divided into sections of 6-12 turns.
     """
     sections: List[Section] = Field(..., description="List of sections representing the structured transcript")
 
@@ -37,42 +41,29 @@ class StructuredTranscript(BaseModel):
 
 ### PROMPTS ###
 
-SECTIONING_SYSTEM_PROMPT = """You are a world-class qualitative researcher with expertise in content analysis and thematic structuring. Your task is to create a meaningful, well-structured representation of a given interview podcast transcript, focusing on the guest's responses to the host's questions.
+SECTIONING_SYSTEM_PROMPT = """You are an expert in content analysis and thematic structuring. Your task is to divide an interview transcript into meaningful sections.
 
-Key guidelines:
-1. Divide the transcript into broad, non-overlapping sections based on primary themes and content of the dialogue.
+Guidelines:
+1. Divide the transcript into sections based on primary themes and content.
 2. Each section must begin with a host turn and end with a guest turn.
-3. Sections should typically encompass multiple question-answer exchanges to capture complete thematic units.
-4. Provide for each section:
-   - A concise (3-7 words) title capturing the main theme
-   - A brief (10-15 words) subtitle elaborating on the title
-   - A summary (2-3 sentences) describing the section's content
-5. Focus on how question topics evolve, capturing the logical progression of the conversation.
-6. Ignore structural aspects like introductions, conclusions, or pleasantries when creating section titles, subtitles, and descriptions.
-7. Include introductory and concluding turns in the first and last sections respectively, but focus on the substantive content discussed.
-
-When identifying distinct topics or themes, consider:
-- Shifts in main subjects
-- Transitions between broader themes and specific examples
-- The core ideas and arguments presented, rather than conversational formalities
-
-Aim for a balance between thematic integrity and appropriate section length, prioritizing content over structure. The first section should start with turn 0, and the last section should end with the last turn in the transcript.
-
-For reference:
-- The host's name is "Dwarkesh Patel".
-- Each section must start with a turn from the host and end with a turn from the guest.
-- Focus on the substantive content of the dialogue rather than structural elements or pleasantries.
+3. Sections should be 6-12 turns long.
+4. For each section, provide:
+   - A concise (3-7 words) title
+   - A brief (10-15 words) subtitle
+   - A summary (2-3 sentences) of the content
+   - The start turn index (must be a host turn)
+   - The end turn index (must be a guest turn)
+5. Focus on the logical progression of the conversation and core ideas presented.
+6. The first section should start with turn 0, and the last section should end with the last turn in the transcript.
 """
 
-SECTIONING_USER_PROMPT = """Analyze the following interview podcast transcript and divide it into meaningful sections according to the guidelines provided. Structure your response using the StructuredTranscript model, which contains a list of Section objects. The goal is to create a structure that allows for a broader examination of the dialogue themes.
+SECTIONING_USER_PROMPT = """Analyze the following interview transcript and divide it into sections according to the guidelines provided. Structure your response using the StructuredTranscript model.
 
-Focus on the primary content and themes of the interview. Ensure that each section provides a clear context for understanding the dialogue within the thematic framework of the conversation. Remember, each section must start with a host turn and end with a guest turn.
-
-Each turn in the transcript is formatted as follows:
+Each turn in the transcript is formatted as:
 [Turn X] Role (Speaker): Action
 Text: Full text of the turn
 
-Use both the action summary and the full text to make informed decisions about sectioning. 
+Use both the action summary and the full text for sectioning. Provide the start and end turn indices for each section.
 
 Transcript:
 
@@ -82,23 +73,14 @@ Transcript:
 ### FUNCTIONS ###
 
 def format_transcript_for_sectioning(transcript_data: Dict[str, Any]) -> str:
-    """
-    Formats the turn data for sectioning, including turn index, role, speaker, action, and full text.
-    Emphasizes the host-guest turn structure.
-    """
     formatted_turns = []
-    
     for turn in transcript_data['turns']:
         full_text = " ".join([sentence['clean_text'] for sentence in turn['sentences']])
         formatted_turn = f"[Turn {turn['index']}] {turn['role']} ({turn['speaker']}): {turn['action']}\nText: {full_text}"
         formatted_turns.append(formatted_turn)
-    
     return "\n\n".join(formatted_turns)
 
 def get_sections(transcript_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Gets the sections of the transcript by sending a prompt to the LLM with the formatted turn data.
-    """
     try:
         formatted_transcript = format_transcript_for_sectioning(transcript_data)
         

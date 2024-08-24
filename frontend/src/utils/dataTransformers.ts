@@ -1,14 +1,10 @@
 import { ItemType, ContentSection } from '../types/pathBased';
 
-interface Sentence {
-  index: number;
-  clean_text: string;
-}
-
 interface Turn {
   index: number;
   speaker: string;
-  sentences: Sentence[];
+  content: string;
+  action: string;
 }
 
 interface Section {
@@ -16,6 +12,7 @@ interface Section {
   title: string;
   subtitle: string;
   description: string;
+  turn_indices: number[];
   turns: Turn[];
 }
 
@@ -39,19 +36,18 @@ const transformSection = (section: Section): ItemType => {
       { type: 'longText', label: 'Description', value: section.description }
     ],
     children: section.turns.map(transformTurn),
-    section: section.id
+    section: section.id,
+    turn_indices: section.turn_indices
   };
 };
 
 const transformTurn = (turn: Turn): ItemType => {
   return {
-    title: `Turn ${turn.index}`,
-    subtitle: turn.speaker,
-    content: turn.sentences.map((sentence: Sentence, index: number) => ({
-      type: 'text',
-      label: `Sentence ${index + 1}`,
-      value: sentence.clean_text
-    })),
+    title: turn.speaker,
+    subtitle: turn.action,
+    content: [
+      { type: 'markdown', label: 'Content', value: turn.content }
+    ],
     children: [placeholderQuestion()], // We'll keep this as a placeholder for now
   };
 };

@@ -18,10 +18,26 @@ def update_firestore_with_sections(transcript_id: str, sections: List[Dict[str, 
     transcript_ref = db.collection('transcripts').document(transcript_id)
     
     for section in sections:
-        section_id = create_subcollection_document('transcripts', transcript_id, 'sections', section)
+        # Create a new section document with start_turn and end_turn
+        section_data = {
+            'title': section['title'],
+            'subtitle': section['subtitle'],
+            'description': section['description'],
+            'start_turn': section['start_turn'],
+            'end_turn': section['end_turn']
+        }
+        section_id = create_subcollection_document('transcripts', transcript_id, 'sections', section_data)
         
-        turns = transcript_ref.collection('turns').where('index', '>=', section['start_turn']).where('index', '<=', section['end_turn']).stream()
-        for turn in turns:
+        # Process all turns within the section
+        for turn_index in range(section['start_turn'], section['end_turn'] + 1):
+            turn_query = transcript_ref.collection('turns').where('index', '==', turn_index)
+            turn_docs = turn_query.get()
+            
+            if not turn_docs:
+                print(f"Warning: Turn with index {turn_index} not found in transcript {transcript_id}")
+                continue
+            
+            turn = turn_docs[0]
             turn_data = turn.to_dict()
             new_turn_id = create_subcollection_document('transcripts', transcript_id, f'sections/{section_id}/turns', turn_data)
             
@@ -62,8 +78,7 @@ def create_firestore_transcript(transcript_data: List[Dict[str, Any]], filename:
 
 def update_firestore_with_tags(transcript_id: str, tags: List[Dict[str, Any]]) -> None:
     """
-    Adds the tag (action) to the firestore document for each turn and updates the 'tagged' flag.
-    The action is a lowercase, grammatically correct description of the turn's content.
+    Adds the tag (action, people, places, things) to the firestore document for each turn and updates the 'tagged' flag.
     """
     db = get_firestore_client()
     transcript_ref = db.collection('transcripts').document(transcript_id)
@@ -75,6 +90,9 @@ def update_firestore_with_tags(transcript_id: str, tags: List[Dict[str, Any]]) -
         for turn in turn_ref:
             turn_data = turn.to_dict()
             turn_data['action'] = tag.action
+            turn_data['people'] = tag.people
+            turn_data['places'] = tag.places
+            turn_data['things'] = tag.things
             update_document(f'transcripts/{transcript_id}/turns', turn.id, turn_data)
     
     # Update the 'tagged' flag in the main transcript document

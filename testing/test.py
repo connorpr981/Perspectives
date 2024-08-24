@@ -43,15 +43,17 @@ def is_transcript_tagged(transcript_id):
 def generate_sections(transcript_id):
     if is_transcript_sectioned(transcript_id):
         print(f"Transcript {transcript_id} is already sectioned. Skipping.")
-        return
+        return False
 
     url = f"{BASE_URL}/generate_transcript_sections?transcript_id={transcript_id}"
     try:
         response = requests.get(url)
         response.raise_for_status()
         print(f"Sections generated for transcript {transcript_id}")
+        return True
     except requests.exceptions.RequestException as e:
         print(f"Error generating sections for transcript {transcript_id}: {str(e)}")
+        return False
 
 def generate_tags(transcript_id):
     if is_transcript_tagged(transcript_id):
@@ -91,7 +93,7 @@ def print_firestore_data():
 def main():
     parser = argparse.ArgumentParser(description="Process transcripts and generate sections")
     parser.add_argument("--read", action="store_true", help="Read transcripts from storage")
-    parser.add_argument("--section", action="store_true", help="Generate sections for transcripts")
+    parser.add_argument("--section", action="store_true", help="Generate sections for one transcript")
     parser.add_argument("--tag", action="store_true", help="Generate tags for transcripts")
     parser.add_argument("--print", action="store_true", help="Print Firestore data")
     args = parser.parse_args()
@@ -108,7 +110,7 @@ def main():
             if transcript_id:
                 transcript_ids.append(transcript_id)
 
-    if args.section or args.tag:
+    if args.section:
         if not transcript_ids:
             print("Fetching transcript IDs from Firestore...")
             transcript_ids = get_transcript_ids_from_firestore()
@@ -116,15 +118,22 @@ def main():
         print("Shuffling transcript order...")
         random.shuffle(transcript_ids)
         
-        if args.section:
-            print("Generating sections for transcripts...")
-            for transcript_id in transcript_ids:
-                generate_sections(transcript_id)
+        print("Generating sections for one transcript...")
+        for transcript_id in transcript_ids:
+            if generate_sections(transcript_id):
+                break  # Stop after successfully sectioning one transcript
+
+    if args.tag:
+        if not transcript_ids:
+            print("Fetching transcript IDs from Firestore...")
+            transcript_ids = get_transcript_ids_from_firestore()
         
-        if args.tag:
-            print("Generating tags for transcripts...")
-            for transcript_id in transcript_ids:
-                generate_tags(transcript_id)
+        print("Shuffling transcript order...")
+        random.shuffle(transcript_ids)
+        
+        print("Generating tags for transcripts...")
+        for transcript_id in transcript_ids:
+            generate_tags(transcript_id)
 
     if args.print:
         print_firestore_data()

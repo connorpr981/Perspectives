@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ItemType } from '../../types/pathBased';
+import ReactMarkdown from 'react-markdown';
 import styles from '../../styles/pathBased.module.css';
 
 interface ItemProps {
@@ -36,13 +37,23 @@ export const Item = React.forwardRef<HTMLDivElement, ItemProps>(({ item, isSelec
           {item.content.map((section, index) => (
             <div key={index} className={styles.contentSection}>
               <h4 className={styles.contentSectionLabel}>{section.label}</h4>
-              {section.type === 'text' ? (
-                <p className={styles.contentSectionValue}>{section.value}</p>
-              ) : (
-                <div className={styles.contentSectionLongText}>
-                  {section.value}
-                </div>
-              )}
+              <div className={styles.contentSectionContent}>
+                {section.type === 'markdown' ? (
+                  <ReactMarkdown
+                    components={{
+                      a: ({ node, children, ...props }) => (
+                        <a target="_blank" rel="noopener noreferrer" {...props}>
+                          {children}
+                        </a>
+                      )
+                    }}
+                  >
+                    {section.value}
+                  </ReactMarkdown>
+                ) : (
+                  <p>{section.value}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>

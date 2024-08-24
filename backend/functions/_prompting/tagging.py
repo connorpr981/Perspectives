@@ -8,6 +8,9 @@ import traceback
 class TurnTag(BaseModel):
     turn_index: int = Field(..., description="The index of the turn in the transcript")
     action: str = Field(..., description="The action of the turn, in sentence case (first letter capitalized), as a complete phrase but not a full sentence, including prepositions if necessary (e.g. 'Discussing climate change', 'Asking about future plans', 'Clarifying previous point', 'Suggesting new solution', 'Interrupting with question')")
+    people: List[str] = Field(default_factory=list, description="List of people mentioned in this turn")
+    places: List[str] = Field(default_factory=list, description="List of places mentioned in this turn")
+    things: List[str] = Field(default_factory=list, description="List of significant things or concepts mentioned in this turn")
 
 class TurnTags(BaseModel):
     tags: List[TurnTag] = Field(..., description="A list of tags for the transcript")
@@ -19,9 +22,13 @@ TAGGING_SYSTEM_PROMPT = """You are a world-class qualitative researcher with ext
 Your task is to create a meaningful, well-structured representation of a given interview podcast transcript chunk, with the ultimate goal of facilitating a closer examination of the dialogue.
 
 Instructions:
-1. You will be given a chunk of turns from a transcript, and you will need to tag each turn with an action.
+1. You will be given a chunk of turns from a transcript, and you will need to tag each turn with an action, people mentioned, places mentioned, and significant things or concepts discussed.
 2. The action should be in sentence case (first letter capitalized), as a complete phrase but not a full sentence, and include prepositions if necessary (e.g. 'Discussing climate change', 'Asking about future plans', 'Clarifying previous point', 'Suggesting new solution', 'Interrupting with question').
 3. Focus on capturing the essence of the turn's content and its role in the conversation.
+4. For people, places, and things:
+   - Include only those explicitly mentioned in the turn.
+   - Use proper nouns where applicable.
+   - For things, focus on significant concepts, objects, or ideas central to the discussion.
 
 Important:
 - Ensure the action is specific enough to convey the turn's purpose but general enough to be applicable across similar turns.
@@ -29,6 +36,7 @@ Important:
 - Use prepositions when necessary for clarity and grammatical correctness.
 - Use sentence case (capitalize the first letter, rest lowercase) for each action.
 - Actions should be complete phrases but not full sentences (no period at the end).
+- Lists for people, places, and things can be empty if none are mentioned.
 
 This transcript chunk has {num_turns} turns. Ensure that you tag all turns in the chunk.
 """
@@ -93,4 +101,14 @@ def format_tag_context(tags: List[TurnTag]) -> str:
     """
     Formats the previous tags as context for the next chunk.
     """
-    return "\n".join([f"Turn {tag.turn_index}: {tag.action}" for tag in tags])
+    formatted_tags = []
+    for tag in tags:
+        turn_info = f"Turn {tag.turn_index}: {tag.action}"
+        if tag.people:
+            turn_info += f"\n  People: {', '.join(tag.people)}"
+        if tag.places:
+            turn_info += f"\n  Places: {', '.join(tag.places)}"
+        if tag.things:
+            turn_info += f"\n  Things: {', '.join(tag.things)}"
+        formatted_tags.append(turn_info)
+    return "\n\n".join(formatted_tags)

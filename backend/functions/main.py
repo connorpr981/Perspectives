@@ -30,6 +30,9 @@ def read_transcript_from_storage(req: https_fn.Request) -> https_fn.Response:
     timeout_sec=540
 )
 def get_turn_tags(req: https_fn.Request) -> https_fn.Response:
+    """
+    Generate tags (action, people, places, things) for each turn in the transcript and update Firestore.
+    """
     transcript_id = req.args.get("transcript_id")
     if not transcript_id:
         return https_fn.Response("No transcript ID provided", status=400)

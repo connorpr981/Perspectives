@@ -151,6 +151,9 @@
   margin-bottom: 0.75rem;
   border: 1px solid var(--color-border);
   font-size: var(--font-size-normal);
+  max-height: 30vh;
+  overflow: hidden; /* Prevent overflow from the entire section */
+  position: relative;
 }
 
 .contentSection:last-child {
@@ -161,14 +164,56 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-accent);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0; /* Reduce bottom margin */
   text-transform: uppercase;
+  position: sticky; /* Ensure the label stays at the top */
+  top: 0; /* Stick to the top of the content section */
+  background-color: var(--color-bg-tertiary); /* Match the background color */
+  z-index: 1; /* Ensure it stays above the content */
+  padding: 0.25rem 0; /* Reduce top and bottom padding */
+}
+
+.contentSectionContent {
+  max-height: calc(30vh - 2rem); /* Adjust based on the label height */
+  overflow-y: auto; /* Allow scrolling within the content */
+  padding-right: 0.25rem; /* Reduce right padding */
+  font-size: var(--font-size-small); /* Ensure small font size */
+  line-height: var(--line-height-normal); /* Ensure consistent line height */
+  color: var(--color-text-primary); /* Ensure consistent text color */
+  font-family: var(--font-family-sans); /* Ensure consistent font family */
+}
+
+.contentSectionContent p {
+  margin: 0 0 0.5rem 0; /* Ensure consistent paragraph margin */
+}
+
+.contentSectionContent a {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: var(--font-weight-bold);
+  transition: color var(--transition-duration) var(--transition-timing);
+}
+
+.contentSectionContent a:hover {
+  color: var(--color-accent-hover);
 }
 
 .contentSectionValue {
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
   color: var(--color-text-primary);
   margin: 0;
+}
+
+.contentSectionValue a {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: var(--font-weight-bold);
+  transition: color var(--transition-duration) var(--transition-timing);
+}
+
+.contentSectionValue a:hover {
+  color: var(--color-accent-hover);
 }
 
 .contentSectionLongText {
@@ -182,6 +227,18 @@
 
 .contentSectionLongText p:last-child {
   margin-bottom: 0;
+}
+
+@media (min-height: 800px) {
+  .contentSection {
+    max-height: 40vh;
+  }
+}
+
+@media (min-height: 1200px) {
+  .contentSection {
+    max-height: 50vh;
+  }
 }
 
 /* Saved paths panel styles */
@@ -435,4 +492,11 @@
 /* Remove this class if it exists, as we no longer need to push the content */
 .mainContentShifted {
   margin-left: var(--sidepane-width);
+}
+
+/* External link icon styles */
+.externalLinkIcon {
+  font-size: 0.8em;
+  margin-left: 0.2em;
+  vertical-align: super;
 }
