@@ -13,13 +13,13 @@ import { useColumnScroll } from '../hooks/useColumnScroll';
 import { usePathNavigation } from '../hooks/usePathNavigation';
 import { useLoading } from '../context/LoadingContext';
 import { useTheme } from '../hooks/useTheme';
+import { KEYBOARD_SHORTCUTS } from '../constants/keyboardShortcuts';
 
 const defaultLayoutConfig: LayoutConfig = {
   columns: [
     { title: 'Sections' },
     { title: 'Turns' },
-    { title: 'Questions' },
-    { title: 'Assertions' },
+    { title: 'Tags' },
   ]
 };
 
@@ -59,7 +59,7 @@ const PathBasedLayoutPage: React.FC = () => {
         setIsLoading(true);
         setFetchError(null);
         try {
-          const transcriptId = 'hYrlvYtIjjX9PEm2CjKe'; // Hardcoded ID for testing with emulator
+          const transcriptId = 'Y0ggv8C4vd4zyhinZYbu'; // Hardcoded ID for testing with emulator
           console.log('Fetching transcript with ID:', transcriptId);
           const data = await fetchTranscriptData(transcriptId);
           console.log('Fetched data:', data);
@@ -107,6 +107,20 @@ const PathBasedLayoutPage: React.FC = () => {
     };
   }, [toggleSidePane]);
 
+  useEffect(() => {
+    const preventArrowKeyDefault = (e: KeyboardEvent) => {
+      if ([KEYBOARD_SHORTCUTS.NAVIGATE_UP, KEYBOARD_SHORTCUTS.NAVIGATE_DOWN, KEYBOARD_SHORTCUTS.NAVIGATE_LEFT, KEYBOARD_SHORTCUTS.NAVIGATE_RIGHT].includes(e.key)) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', preventArrowKeyDefault);
+
+    return () => {
+      window.removeEventListener('keydown', preventArrowKeyDefault);
+    };
+  }, []);
+
   if (fetchError) {
     return <div>Error: {fetchError}</div>;
   }
@@ -119,7 +133,10 @@ const PathBasedLayoutPage: React.FC = () => {
 
   return (
     <div className={layoutStyles.layout}>
-      <div className={layoutStyles.layout}>
+      <header className={layoutStyles.header}>
+        <h1>Perspectives</h1>
+      </header>
+      <div className={layoutStyles.mainLayout}>
         <SidePane
           isExpanded={isSidePaneExpanded}
           onClose={toggleSidePane}
@@ -141,6 +158,7 @@ const PathBasedLayoutPage: React.FC = () => {
                   isActive={colIndex === activeColumnIndex}
                   scrollColumnIntoView={scrollColumnIntoView}
                   observe={() => {}}
+                  activeColumnIndex={activeColumnIndex}
                 />
               ))}
             </div>

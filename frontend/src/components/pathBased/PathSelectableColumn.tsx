@@ -14,6 +14,7 @@ interface PathSelectableColumnProps {
   observe: (element: Element | null) => void;
   isActive: boolean;
   scrollColumnIntoView: (columnRef: React.RefObject<HTMLDivElement>, columnIndex: number) => void;
+  activeColumnIndex: number;
 }
 
 export const PathSelectableColumn: React.FC<PathSelectableColumnProps> = ({
@@ -24,7 +25,8 @@ export const PathSelectableColumn: React.FC<PathSelectableColumnProps> = ({
   config,
   observe,
   isActive,
-  scrollColumnIntoView
+  scrollColumnIntoView,
+  activeColumnIndex
 }) => {
   const columnRef = useRef<HTMLDivElement>(null);
   const itemsWrapperRef = useRef<HTMLDivElement>(null);
@@ -55,9 +57,18 @@ export const PathSelectableColumn: React.FC<PathSelectableColumnProps> = ({
     }
   }, [path, columnIndex]);
 
+  useEffect(() => {
+    if (columnIndex > activeColumnIndex && itemsWrapperRef.current) {
+      itemsWrapperRef.current.scrollTop = 0;
+    }
+  }, [activeColumnIndex, columnIndex]);
+
   // Group items by section
   const groupedItems = items.reduce((acc, item) => {
-    const section = item.section || 'Other';
+    let section = item.section || 'Other';
+    if (config.title === 'Tags') {
+      section = 'Tidbits';
+    }
     if (!acc[section]) {
       acc[section] = [];
     }
@@ -67,7 +78,6 @@ export const PathSelectableColumn: React.FC<PathSelectableColumnProps> = ({
 
   return (
     <Column 
-      title={config.title} 
       ref={columnRef} 
       className={`${isActive ? styles.activeColumn : ''} ${hasSelectedItem ? styles.hasSelectedItem : ''}`}
     >

@@ -64,6 +64,7 @@ export const usePathNavigation = (
   const handleKeyNavigation = useCallback((e: KeyboardEvent) => {
     if ([KEYBOARD_SHORTCUTS.NAVIGATE_UP, KEYBOARD_SHORTCUTS.NAVIGATE_DOWN, KEYBOARD_SHORTCUTS.NAVIGATE_LEFT, KEYBOARD_SHORTCUTS.NAVIGATE_RIGHT].includes(e.key)) {
       e.preventDefault();
+      e.stopPropagation();
       setPath(prevPath => {
         const newPath = [...prevPath];
         const currentColumn = newPath.length - 1;
@@ -82,7 +83,10 @@ export const usePathNavigation = (
             break;
           case KEYBOARD_SHORTCUTS.NAVIGATE_RIGHT:
             if (currentColumn < config.columns.length - 1) {
-              newPath.push(0);
+              const currentItem = currentColumnItems[newPath[currentColumn]];
+              if (currentItem && currentItem.children && currentItem.children.length > 0) {
+                newPath.push(0);
+              }
             }
             break;
         }

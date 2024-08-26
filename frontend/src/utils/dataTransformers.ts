@@ -5,6 +5,12 @@ interface Turn {
   speaker: string;
   content: string;
   action: string;
+  tag_contexts?: TagContext[];
+}
+
+interface TagContext {
+  term: string;
+  context: string;
 }
 
 interface Section {
@@ -48,28 +54,16 @@ const transformTurn = (turn: Turn): ItemType => {
     content: [
       { type: 'markdown', label: 'Content', value: turn.content }
     ],
-    children: [placeholderQuestion()], // We'll keep this as a placeholder for now
+    children: turn.tag_contexts ? turn.tag_contexts.map(transformTagContext) : [],
   };
 };
 
-const placeholderQuestion = (): ItemType => {
+const transformTagContext = (tagContext: TagContext): ItemType => {
   return {
-    title: 'Placeholder Question',
+    title: tagContext.term,
     subtitle: '',
     content: [
-      { type: 'text', label: 'Placeholder', value: 'This is a placeholder question' }
-    ],
-    children: [placeholderAssertion()]
-  };
-};
-
-const placeholderAssertion = (): ItemType => {
-  return {
-    title: 'Placeholder Assertion',
-    subtitle: 'Placeholder Category',
-    content: [
-      { type: 'longText', label: 'Content', value: 'This is a placeholder assertion' },
-      { type: 'longText', label: 'Evidence', value: 'This is placeholder evidence' }
+      { type: 'markdown', label: 'Context', value: tagContext.context }
     ],
     children: []
   };

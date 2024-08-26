@@ -10,22 +10,10 @@
   border-right: 1px solid var(--color-border);
   background-color: var(--color-bg-secondary);
   position: relative;
-}
-
-.columnHeader {
-  background-color: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.columnTitle {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-header);
-  padding: 1rem;
-  margin: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .activeColumnIndicator {
@@ -33,11 +21,11 @@
   top: 0;
   left: 0;
   right: 0;
-  height: var(--active-column-indicator-height);
-  background-color: var(--color-active-indicator);
+  height: 1px;
+  background-color: var(--color-accent);
+  z-index: 1000;
   opacity: 0;
   transition: opacity var(--transition-duration) var(--transition-timing);
-  z-index: 2;
 }
 
 .column.activeColumn .activeColumnIndicator,
@@ -96,6 +84,16 @@
   min-height: 3.5rem;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-normal);
+}
+
+.itemSelected .itemTitle,
+.itemSelected .itemSubtitle,
+.itemSelected .itemContent {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .item:hover {
@@ -429,7 +427,7 @@
   position: sticky;
   top: 0;
   background-color: var(--color-bg-secondary);
-  z-index: 1;
+  z-index: 2;
   display: flex;
   align-items: center;
   height: 1.5rem;
