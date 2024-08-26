@@ -2,17 +2,17 @@
   "name": "sample/dwarkesh_pcollison.json",
   "bucket": "perspectives-f2e80.appspot.com",
   "metageneration": 1,
-  "generation": 1724346617492,
+  "generation": 1724346537459,
   "contentType": "application/json",
   "storageClass": "STANDARD",
   "contentDisposition": "inline",
   "downloadTokens": [
-    "3d8755d4-9931-4f8f-a531-7ed7fa33af69"
+    "d190094d-647e-448d-b720-925875f0e0dc"
   ],
-  "etag": "PyW9hRPb0xU9VVx0s583yiSS6iI",
+  "etag": "FD7YR5MsNBgxOr9TeUdk7chWz34",
   "customMetadata": {},
-  "timeCreated": "2024-08-22T17:10:17.492Z",
-  "updated": "2024-08-22T17:10:17.492Z",
+  "timeCreated": "2024-08-22T17:08:57.459Z",
+  "updated": "2024-08-22T17:08:57.459Z",
   "size": 471184,
   "md5Hash": "oqgly/ft214FHSSNG4JVXA==",
   "crc32c": "2686125453"

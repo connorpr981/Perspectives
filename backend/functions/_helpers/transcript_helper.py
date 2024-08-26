@@ -18,8 +18,10 @@ def update_firestore_with_sections(transcript_id: str, sections: List[Dict[str, 
     db = get_firestore_client()
     transcript_ref = db.collection('transcripts').document(transcript_id)
     
+    # Create a batch for efficient writes
+    batch = db.batch()
+    
     for section in sections:
-        # Create a new section document with start_turn and end_turn
         section_data = {
             'title': section['title'],
             'subtitle': section['subtitle'],
@@ -27,7 +29,8 @@ def update_firestore_with_sections(transcript_id: str, sections: List[Dict[str, 
             'start_turn': section['start_turn'],
             'end_turn': section['end_turn']
         }
-        section_id = create_subcollection_document('transcripts', transcript_id, 'sections', section_data)
+        section_ref = transcript_ref.collection('sections').document()
+        batch.set(section_ref, section_data)
         
         # Process all turns within the section
         for turn_index in range(section['start_turn'], section['end_turn'] + 1):
@@ -35,23 +38,32 @@ def update_firestore_with_sections(transcript_id: str, sections: List[Dict[str, 
             turn_docs = turn_query.get()
             
             if not turn_docs:
-                print(f"Warning: Turn with index {turn_index} not found in transcript {transcript_id}")
+                logging.warning(f"Warning: Turn with index {turn_index} not found in transcript {transcript_id}")
                 continue
             
             turn = turn_docs[0]
             turn_data = turn.to_dict()
-            new_turn_id = create_subcollection_document('transcripts', transcript_id, f'sections/{section_id}/turns', turn_data)
+            
+            # Keep the original turn ID
+            new_turn_ref = section_ref.collection('turns').document(turn.id)
+            batch.set(new_turn_ref, turn_data)
             
             sentences = turn.reference.collection('sentences').stream()
             for sentence in sentences:
                 sentence_data = sentence.to_dict()
-                create_subcollection_document('transcripts', transcript_id, f'sections/{section_id}/turns/{new_turn_id}/sentences', sentence_data)
-                sentence.reference.delete()
+                new_sentence_ref = new_turn_ref.collection('sentences').document(sentence.id)
+                batch.set(new_sentence_ref, sentence_data)
             
-            turn.reference.delete()
+            # Don't delete the original turn and sentences, we'll do that later
     
+    # Update the transcript document
+    batch.update(transcript_ref, {'sectioned': True})
+    
+    # Commit the batch
+    batch.commit()
+    
+    # Now delete the old turns collection
     delete_collection(transcript_ref.collection('turns'))
-    update_document('transcripts', transcript_id, {'sectioned': True})
 
 def create_firestore_transcript(transcript_data: List[Dict[str, Any]], filename: str) -> str:
     db = get_firestore_client()
@@ -70,10 +82,11 @@ def create_firestore_transcript(transcript_data: List[Dict[str, Any]], filename:
             "start_time": turn["start_time"],
             "content": turn["content"]
         }
-        turn_id = create_subcollection_document('transcripts', transcript_ref.id, 'turns', turn_data)
+        turn_ref = transcript_ref.collection('turns').document()
+        turn_ref.set(turn_data)
 
         for sentence in turn["sentences"]:
-            create_subcollection_document('transcripts', transcript_ref.id, f'turns/{turn_id}/sentences', sentence)
+            turn_ref.collection('sentences').document().set(sentence)
 
     return transcript_ref.id
 
@@ -84,7 +97,6 @@ def update_firestore_with_tags(transcript_id: str, tags: List[Dict[str, Any]]) -
     db = get_firestore_client()
     transcript_ref = db.collection('transcripts').document(transcript_id)
     
-    # Fetch all turns for this transcript
     turns = transcript_ref.collection('turns').get()
     turn_dict = {turn.to_dict()['index']: turn.reference for turn in turns}
     
@@ -113,8 +125,45 @@ def update_firestore_with_tags(transcript_id: str, tags: List[Dict[str, Any]]) -
         except Exception as e:
             logging.error(f"Error updating turn {turn_index} in transcript {transcript_id}: {str(e)}")
     
-    # Update the 'tagged' flag in the main transcript document
     try:
         update_document('transcripts', transcript_id, {'tagged': True})
     except Exception as e:
         logging.error(f"Error updating 'tagged' flag for transcript {transcript_id}: {str(e)}")
+
+def find_turn_in_sections(transcript_ref, turn_id):
+    print(f"Searching for turn {turn_id} in transcript {transcript_ref.id}")
+    sections = transcript_ref.collection('sections').stream()
+    for section in sections:
+        print(f"Checking section {section.id}")
+        turn_ref = section.reference.collection('turns').document(turn_id)
+        turn_doc = turn_ref.get()
+        if turn_doc.exists:
+            print(f"Found turn {turn_id} in section {section.id}")
+            return turn_doc.to_dict(), section.id
+    print(f"Turn {turn_id} not found in any section of transcript {transcript_ref.id}")
+    return None, None
+
+def verify_transcript_structure(transcript_id: str):
+    db = get_firestore_client()
+    transcript_ref = db.collection('transcripts').document(transcript_id)
+    transcript_doc = transcript_ref.get()
+    
+    if not transcript_doc.exists:
+        print(f"Transcript {transcript_id} does not exist")
+        return
+    
+    print(f"Verifying structure of transcript {transcript_id}")
+    
+    sections = transcript_ref.collection('sections').stream()
+    section_count = 0
+    for section in sections:
+        section_count += 1
+        print(f"Section {section.id}:")
+        turns = section.reference.collection('turns').stream()
+        turn_count = 0
+        for turn in turns:
+            turn_count += 1
+            print(f"  Turn {turn.id}")
+        print(f"  Total turns in section: {turn_count}")
+    
+    print(f"Total sections in transcript: {section_count}")

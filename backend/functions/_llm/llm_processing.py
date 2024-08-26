@@ -27,7 +27,7 @@ class AIProviderClient:
             self.model_name = model or "command-r-plus"
         elif provider == "perplexity":
             self.client = instructor.from_openai(OpenAI(base_url="https://api.perplexity.ai", api_key=os.getenv("PERPLEXITY_API_KEY")))
-            self.model_name = model or "llama-3-sonar-large-32k-online"
+            self.model_name = model or "llama-3.1-sonar-huge-128k-online"
         else:
             raise ValueError(f"Invalid provider: {provider}")
 

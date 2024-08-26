@@ -4,14 +4,20 @@ from firebase_admin import initialize_app
 import traceback
 
 from _utils.storage_utils import read_json_from_storage
-from _utils.firestore_utils import print_firestore_data
+from _utils.firestore_utils import print_firestore_data, print_all_tags
 
 from _prompting.tagging import get_tags
 from _prompting.sectioning import get_sections
-from _prompting.researching import generate_tag_context
+from _prompting.researching import generate_tag_relevance
 
-from _helpers.transcript_helper import create_firestore_transcript, get_transcript_data, update_firestore_with_sections, update_firestore_with_tags
-from _helpers.tag_helper import create_tag_index, create_tags_collection, update_tags_after_sectioning, process_transcript_tags
+from _helpers.transcript_helper import (
+    create_firestore_transcript, 
+    get_transcript_data, 
+    update_firestore_with_sections, 
+    update_firestore_with_tags,
+    verify_transcript_structure
+)
+from _helpers.tag_helper import create_tag_index, create_tags_collection, process_transcript_tags
 
 app = initialize_app()
 
@@ -47,7 +53,7 @@ def get_turn_tags(req: https_fn.Request) -> https_fn.Response:
         tags = get_tags(transcript_data)
         tag_index = create_tag_index(tags, transcript_id)
         update_firestore_with_tags(transcript_id, tags)
-        create_tags_collection(tag_index)
+        create_tags_collection(tag_index, transcript_id)  # Add transcript_id here
         logging.info(f"Completed tag generation for transcript {transcript_id}")
         return https_fn.Response(f"Transcript tags processed and tags collection updated for ID: {transcript_id}")
     except Exception as e:
@@ -66,9 +72,8 @@ def generate_transcript_sections(req: https_fn.Request) -> https_fn.Response:
         transcript_data = get_transcript_data(transcript_id)
         sections = get_sections(transcript_data)
         update_firestore_with_sections(transcript_id, sections)
-        update_tags_after_sectioning(transcript_id, sections)
         logging.info(f"Completed section generation for transcript {transcript_id}")
-        return https_fn.Response(f"Transcript sections generated and tags updated for ID: {transcript_id}")
+        return https_fn.Response(f"Transcript sections generated for ID: {transcript_id}")
     except Exception as e:
         error_message = f"Error generating transcript sections: {str(e)}\n{traceback.format_exc()}"
         logging.error(error_message)
@@ -82,7 +87,10 @@ def generate_tag_contexts(req: https_fn.Request) -> https_fn.Response:
     
     try:
         logging.info(f"Starting tag context generation for transcript {transcript_id}")
-        process_transcript_tags(transcript_id, generate_tag_context)
+        
+        verify_transcript_structure(transcript_id)
+        
+        process_transcript_tags(transcript_id, generate_tag_relevance)
         logging.info(f"Completed tag context generation for transcript {transcript_id}")
         return https_fn.Response(f"Tag contexts generated for transcript ID: {transcript_id}")
     except Exception as e:

@@ -69,6 +69,15 @@ def generate_tags(transcript_id):
     except requests.exceptions.RequestException as e:
         print(f"Error generating tags for transcript {transcript_id}: {str(e)}")
 
+def generate_tag_contexts(transcript_id):
+    url = f"{BASE_URL}/generate_tag_contexts?transcript_id={transcript_id}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        print(f"Tag contexts generated for transcript {transcript_id}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error generating tag contexts for transcript {transcript_id}: {str(e)}")
+
 def get_transcript_ids_from_firestore():
     transcripts_ref = db.collection("transcripts")
     docs = transcripts_ref.stream()
@@ -96,18 +105,21 @@ def process_transcript(transcript_id, args):
         generate_sections(transcript_id)
     if args.tag:
         generate_tags(transcript_id)
+    if args.context:
+        generate_tag_contexts(transcript_id)
 
 def main():
-    parser = argparse.ArgumentParser(description="Process transcripts and generate sections")
+    parser = argparse.ArgumentParser(description="Process transcripts, generate sections, tags, and tag contexts")
     parser.add_argument("--read", action="store_true", help="Read transcripts from storage")
     parser.add_argument("--section", action="store_true", help="Generate sections for transcripts")
     parser.add_argument("--tag", action="store_true", help="Generate tags for transcripts")
+    parser.add_argument("--context", action="store_true", help="Generate tag contexts for transcripts")
     parser.add_argument("--print", action="store_true", help="Print Firestore data")
     parser.add_argument("--all", action="store_true", help="Process all transcripts instead of just one")
     args = parser.parse_args()
 
-    if not (args.read or args.section or args.tag or args.print):
-        parser.error("At least one of --read, --section, --tag, or --print must be specified")
+    if not (args.read or args.section or args.tag or args.context or args.print):
+        parser.error("At least one of --read, --section, --tag, --context, or --print must be specified")
 
     transcript_ids = []
 
@@ -120,7 +132,7 @@ def main():
         if not args.all:
             transcript_ids = [random.choice(transcript_ids)]
 
-    if args.section or args.tag:
+    if args.section or args.tag or args.context:
         if not transcript_ids:
             print("Fetching transcript IDs from Firestore...")
             transcript_ids = get_transcript_ids_from_firestore()
@@ -132,8 +144,8 @@ def main():
             random.shuffle(transcript_ids)
         
         if args.all:
-            print(f"Processing all transcripts with 5 workers...")
-            with ThreadPoolExecutor(max_workers=5) as executor:
+            print(f"Processing all transcripts with 2 workers...")
+            with ThreadPoolExecutor(max_workers=2) as executor:
                 futures = [executor.submit(process_transcript, transcript_id, args) for transcript_id in transcript_ids]
                 for future in as_completed(futures):
                     try:
