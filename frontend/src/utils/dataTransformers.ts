@@ -6,6 +6,7 @@ interface Turn {
   content: string;
   action: string;
   tag_contexts?: TagContext[];
+  questions?: Question[];
 }
 
 interface TagContext {
@@ -20,6 +21,13 @@ interface Section {
   description: string;
   turn_indices: number[];
   turns: Turn[];
+}
+
+interface Question {
+  type: 'enrichment' | 'reflective';
+  question: string;
+  information_type?: string;
+  action?: string;
 }
 
 export const transformTranscriptData = (data: any): ItemType => {
@@ -48,13 +56,31 @@ const transformSection = (section: Section): ItemType => {
 };
 
 const transformTurn = (turn: Turn): ItemType => {
+  const children: ItemType[] = [];
+
+  if (turn.questions) {
+    turn.questions.forEach((question) => {
+      const questionItem: ItemType = {
+        title: question.question,
+        subtitle: question.type === 'enrichment' ? question.information_type || '' : question.action || '',
+        content: [],
+        section: question.type === 'enrichment' ? 'Enrichment Questions' : 'Reflective Questions',
+      };
+      children.push(questionItem);
+    });
+  }
+
+  if (turn.tag_contexts) {
+    children.push(...turn.tag_contexts.map(transformTagContext));
+  }
+
   return {
     title: turn.speaker,
     subtitle: turn.action,
     content: [
       { type: 'markdown', label: 'Content', value: turn.content }
     ],
-    children: turn.tag_contexts ? turn.tag_contexts.map(transformTagContext) : [],
+    children,
   };
 };
 

@@ -24,12 +24,21 @@ export const fetchTranscriptData = async (transcriptId: string) => {
       const turnsQuery = query(collection(sectionDoc.ref, "turns"), orderBy("index"));
       const turnsSnapshot = await getDocs(turnsQuery);
       
-      const turns = turnsSnapshot.docs.map(turnDoc => turnDoc.data());
+      const turns = await Promise.all(turnsSnapshot.docs.map(async (turnDoc) => {
+        const turnData = turnDoc.data();
+        
+        // Fetch questions for each turn
+        const questionsQuery = query(collection(turnDoc.ref, "questions"));
+        const questionsSnapshot = await getDocs(questionsQuery);
+        const questions = questionsSnapshot.docs.map(questionDoc => questionDoc.data());
+
+        return { ...turnData, questions };
+      }));
 
       return { ...sectionData, turns };
     }));
 
-    console.log('Sections with turns:', sections);
+    console.log('Sections with turns and questions:', sections);
 
     return { transcript: transcriptDoc.data(), sections };
   } catch (error) {

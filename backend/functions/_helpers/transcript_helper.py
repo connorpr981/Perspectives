@@ -146,24 +146,33 @@ def find_turn_in_sections(transcript_ref, turn_id):
 def verify_transcript_structure(transcript_id: str):
     db = get_firestore_client()
     transcript_ref = db.collection('transcripts').document(transcript_id)
-    transcript_doc = transcript_ref.get()
     
-    if not transcript_doc.exists:
-        print(f"Transcript {transcript_id} does not exist")
-        return
-    
-    print(f"Verifying structure of transcript {transcript_id}")
+    logging.info(f"Verifying structure for transcript {transcript_id}")
     
     sections = transcript_ref.collection('sections').stream()
     section_count = 0
+    total_turns = 0
+    
     for section in sections:
         section_count += 1
-        print(f"Section {section.id}:")
+        section_data = section.to_dict()
+        logging.info(f"Section {section.id}:")
+        logging.info(f"  Title: {section_data.get('title', 'N/A')}")
+        logging.info(f"  Start Turn: {section_data.get('start_turn', 'N/A')}")
+        logging.info(f"  End Turn: {section_data.get('end_turn', 'N/A')}")
+        
         turns = section.reference.collection('turns').stream()
         turn_count = 0
         for turn in turns:
             turn_count += 1
-            print(f"  Turn {turn.id}")
-        print(f"  Total turns in section: {turn_count}")
+            turn_data = turn.to_dict()
+            logging.info(f"  Turn {turn.id}:")
+            logging.info(f"    index: {turn_data.get('index', 'N/A')}")
+            logging.info(f"    role: {turn_data.get('role', 'N/A')}")
+            logging.info(f"    speaker: {turn_data.get('speaker', 'N/A')}")
+        
+        logging.info(f"  Total turns in section: {turn_count}")
+        total_turns += turn_count
     
-    print(f"Total sections in transcript: {section_count}")
+    logging.info(f"Total sections in transcript: {section_count}")
+    logging.info(f"Total turns across all sections: {total_turns}")

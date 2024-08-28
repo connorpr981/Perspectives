@@ -65,10 +65,7 @@ export const PathSelectableColumn: React.FC<PathSelectableColumnProps> = ({
 
   // Group items by section
   const groupedItems = items.reduce((acc, item) => {
-    let section = item.section || 'Other';
-    if (config.title === 'Tags') {
-      section = 'Tidbits';
-    }
+    const section = item.section || 'Other';
     if (!acc[section]) {
       acc[section] = [];
     }
