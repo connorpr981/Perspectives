@@ -66,7 +66,7 @@ export const fetchInterviewersAndGuests = async (transcriptId: string): Promise<
       throw new Error("Filename not found in transcript data");
     }
 
-    const [interviewer, guest] = fileName.split('_').map(name => name.split('.')[0]);
+    const [interviewer, guest] = fileName.split('_').map((name: string) => name.split('.')[0]);
     if (!interviewer || !guest) {
       throw new Error("Invalid filename format");
     }
