@@ -19,7 +19,8 @@ const defaultLayoutConfig: LayoutConfig = {
   columns: [
     { title: 'Sections' },
     { title: 'Turns' },
-    { title: 'Tags' },
+    { title: 'Questions' },
+    { title: 'Perspectives' }, // Add this new column
   ]
 };
 

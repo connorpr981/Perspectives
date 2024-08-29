@@ -30,7 +30,19 @@ export const fetchTranscriptData = async (transcriptId: string) => {
         // Fetch questions for each turn
         const questionsQuery = query(collection(turnDoc.ref, "questions"));
         const questionsSnapshot = await getDocs(questionsQuery);
-        const questions = questionsSnapshot.docs.map(questionDoc => questionDoc.data());
+        const questions = await Promise.all(questionsSnapshot.docs.map(async (questionDoc) => {
+          const questionData = questionDoc.data();
+          
+          // Fetch perspectives for reflective questions
+          if (questionData.type === 'reflective') {
+            const perspectivesQuery = query(collection(questionDoc.ref, "perspectives"));
+            const perspectivesSnapshot = await getDocs(perspectivesQuery);
+            const perspectives = perspectivesSnapshot.docs.map(perspectiveDoc => perspectiveDoc.data());
+            return { ...questionData, perspectives };
+          }
+          
+          return questionData;
+        }));
 
         return { ...turnData, questions };
       }));

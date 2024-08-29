@@ -28,6 +28,12 @@ interface Question {
   question: string;
   information_type?: string;
   action?: string;
+  perspectives?: Perspective[];
+}
+
+interface Perspective {
+  name: string;
+  // Add any other fields that perspectives might have
 }
 
 export const transformTranscriptData = (data: any): ItemType => {
@@ -66,6 +72,11 @@ const transformTurn = (turn: Turn): ItemType => {
         content: [],
         section: question.type === 'enrichment' ? 'Enrichment Questions' : 'Reflective Questions',
       };
+
+      if (question.type === 'reflective' && question.perspectives) {
+        questionItem.children = question.perspectives.map(transformPerspective);
+      }
+
       children.push(questionItem);
     });
   }
@@ -91,6 +102,15 @@ const transformTagContext = (tagContext: TagContext): ItemType => {
     content: [
       { type: 'markdown', label: 'Context', value: tagContext.context }
     ],
+    children: []
+  };
+};
+
+const transformPerspective = (perspective: Perspective): ItemType => {
+  return {
+    title: perspective.name,
+    subtitle: '',
+    content: [],
     children: []
   };
 };
