@@ -50,33 +50,49 @@ export const fetchTranscriptData = async (transcriptId: string) => {
 export interface InterviewerData {
   name: string;
   guests: string[];
+  transcriptIds: string[]; // Add this line to store transcript IDs
 }
 
-export const fetchInterviewersAndGuests = async (transcriptId: string): Promise<InterviewerData[]> => {
+export const fetchInterviewersAndGuests = async (): Promise<InterviewerData[]> => {
   try {
-    const transcriptRef = doc(firestore, "transcripts", transcriptId);
-    const transcriptDoc = await getDoc(transcriptRef);
+    const transcriptsRef = collection(firestore, "transcripts");
+    const transcriptsSnapshot = await getDocs(transcriptsRef);
 
-    if (!transcriptDoc.exists()) {
-      throw new Error("Transcript not found");
-    }
+    const interviewersMap: { [key: string]: InterviewerData } = {};
 
-    const fileName = transcriptDoc.data().filename;
-    if (!fileName) {
-      throw new Error("Filename not found in transcript data");
-    }
+    transcriptsSnapshot.forEach((doc) => {
+      const transcriptData = doc.data();
+      const fileName = transcriptData.filename;
+      
+      if (!fileName) {
+        console.warn(`Transcript ${doc.id} has no filename`);
+        return;
+      }
 
-    const [interviewer, guest] = fileName.split('_').map((name: string) => name.split('.')[0]);
-    if (!interviewer || !guest) {
-      throw new Error("Invalid filename format");
-    }
+      const [interviewer, guest] = fileName.split('_').map((name: string) => name.split('.')[0]);
+      
+      if (!interviewer || !guest) {
+        console.warn(`Invalid filename format for transcript ${doc.id}`);
+        return;
+      }
 
-    return [{
-      name: interviewer,
-      guests: [guest]
-    }];
+      if (!interviewersMap[interviewer]) {
+        interviewersMap[interviewer] = {
+          name: interviewer,
+          guests: [],
+          transcriptIds: []
+        };
+      }
+
+      if (!interviewersMap[interviewer].guests.includes(guest)) {
+        interviewersMap[interviewer].guests.push(guest);
+      }
+      interviewersMap[interviewer].transcriptIds.push(doc.id);
+    });
+
+    return Object.values(interviewersMap).sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
-    console.error("Error fetching interviewer and guest:", error);
+    console.error("Error fetching interviewers and guests:", error);
     throw error;
   }
 };

@@ -16,11 +16,12 @@ interface SidePaneProps {
 interface InterviewerProps {
   name: string;
   guests: string[];
-  onGuestSelect: (interviewer: string, guest: string) => void;
+  transcriptIds: string[]; // Add this line
+  onGuestSelect: (interviewer: string, guest: string, transcriptId: string) => void;
   selectedGuest: string | null;
 }
 
-const Interviewer: React.FC<InterviewerProps> = ({ name, guests, onGuestSelect, selectedGuest }) => {
+const Interviewer: React.FC<InterviewerProps> = ({ name, guests, transcriptIds, onGuestSelect, selectedGuest }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -33,11 +34,11 @@ const Interviewer: React.FC<InterviewerProps> = ({ name, guests, onGuestSelect, 
         <span>{name}</span>
       </button>
       <div className={`${styles.guestList} ${isExpanded ? styles.expanded : ''}`}>
-        {guests.map((guest) => (
+        {guests.map((guest, index) => (
           <button
             key={guest}
             className={`${styles.guestButton} ${selectedGuest === guest ? styles.selected : ''}`}
-            onClick={() => onGuestSelect(name, guest)}
+            onClick={() => onGuestSelect(name, guest, transcriptIds[index])}
           >
             {guest}
           </button>
@@ -50,16 +51,13 @@ const Interviewer: React.FC<InterviewerProps> = ({ name, guests, onGuestSelect, 
 export const SidePane: React.FC<SidePaneProps> = ({ isExpanded, onClose, theme, toggleTheme }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [selectedInterview, setSelectedInterview] = useState<{ interviewer: string, guest: string } | null>(null);
+  const [selectedInterview, setSelectedInterview] = useState<{ interviewer: string, guest: string, transcriptId: string } | null>(null);
   const [interviewers, setInterviewers] = useState<InterviewerData[]>([]);
 
   useEffect(() => {
     const loadInterviewersAndGuests = async () => {
       try {
-        // Assuming you have access to the transcript ID here
-        // You might need to pass it as a prop to SidePane or get it from a context
-        const transcriptId = "Y0ggv8C4vd4zyhinZYbu"; // Replace this with the actual way you're getting the transcript ID
-        const data = await fetchInterviewersAndGuests(transcriptId);
+        const data = await fetchInterviewersAndGuests();
         setInterviewers(data);
       } catch (error) {
         console.error("Failed to load interviewers and guests:", error);
@@ -78,8 +76,9 @@ export const SidePane: React.FC<SidePaneProps> = ({ isExpanded, onClose, theme, 
     }
   };
 
-  const handleGuestSelect = (interviewer: string, guest: string) => {
-    setSelectedInterview({ interviewer, guest });
+  const handleGuestSelect = (interviewer: string, guest: string, transcriptId: string) => {
+    setSelectedInterview({ interviewer, guest, transcriptId });
+    // You might want to add logic here to load the selected transcript
   };
 
   return (
@@ -112,6 +111,7 @@ export const SidePane: React.FC<SidePaneProps> = ({ isExpanded, onClose, theme, 
               key={interviewer.name}
               name={interviewer.name}
               guests={interviewer.guests}
+              transcriptIds={interviewer.transcriptIds}
               onGuestSelect={handleGuestSelect}
               selectedGuest={selectedInterview?.interviewer === interviewer.name ? selectedInterview.guest : null}
             />
