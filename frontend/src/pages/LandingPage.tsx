@@ -10,7 +10,7 @@ const LandingPage: React.FC = () => {
     <div className={`${styles.layout} ${styles.landingPage}`}>
       <main className={styles.landingContent}>
         <h1 className={styles.landingTitle}>Welcome to Perspectives</h1>
-        <p className={styles.landingDescription}>Explore different viewpoints and navigate through questions, assertions, and perspectives.</p>
+        <p className={styles.landingDescription}>Explore, depth-wise.</p>
         {user ? (
           <Link to="/explore" className={styles.landingButton}>
             Start Exploring
