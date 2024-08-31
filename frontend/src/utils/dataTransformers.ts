@@ -37,9 +37,7 @@ interface Perspective {
 }
 
 export const transformTranscriptData = (data: any): ItemType => {
-  console.log('Transforming data:', data);
   const sections = data.sections.map((section: Section) => transformSection(section));
-  console.log('Transformed sections:', sections);
   return {
     title: data.transcript.title || 'Untitled Transcript',
     subtitle: '',
