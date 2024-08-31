@@ -14,6 +14,7 @@ import { usePathNavigation } from '../hooks/usePathNavigation';
 import { useLoading } from '../context/LoadingContext';
 import { useTheme } from '../hooks/useTheme';
 import { KEYBOARD_SHORTCUTS } from '../constants/keyboardShortcuts';
+import { useTranscript } from '../context/TranscriptContext';
 
 const defaultLayoutConfig: LayoutConfig = {
   columns: [
@@ -25,6 +26,7 @@ const defaultLayoutConfig: LayoutConfig = {
 };
 
 const PathBasedLayoutPage: React.FC = () => {
+  const { transcriptId, setTranscriptId } = useTranscript();
   const [config] = useState<LayoutConfig>(defaultLayoutConfig);
   const [rootItem, setRootItem] = useState<ItemType | null>(null);
   const [isSidePaneExpanded, setIsSidePaneExpanded] = useState(false);

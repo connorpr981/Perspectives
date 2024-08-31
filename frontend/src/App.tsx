@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'r
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { AuthProvider } from './context/AuthContext';
 import { LoadingProvider } from './context/LoadingContext';
+import { TranscriptProvider } from './context/TranscriptContext'; // Add this import
 import { useAuth } from './hooks/useAuth';
 import { useLoading } from './context/LoadingContext';
 import LandingPage from './pages/LandingPage';
@@ -43,7 +44,9 @@ const AnimatedRoutes = () => {
             path="/explore"
             element={
               <ProtectedRoute>
-                <PathBasedLayoutPage />
+                <TranscriptProvider>
+                  <PathBasedLayoutPage />
+                </TranscriptProvider>
               </ProtectedRoute>
             }
           />
@@ -52,6 +55,7 @@ const AnimatedRoutes = () => {
     </TransitionGroup>
   );
 };
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
