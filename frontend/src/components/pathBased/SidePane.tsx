@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useTranscript } from '../../context/TranscriptContext'; // Add this import
 import { logOut } from '../../services/firebase';
 import { fetchInterviewersAndGuests, InterviewerData } from '../../services/firestoreService';
 import styles from '../../styles/sidePane.module.css';
@@ -51,6 +52,7 @@ const Interviewer: React.FC<InterviewerProps> = ({ name, guests, transcriptIds, 
 export const SidePane: React.FC<SidePaneProps> = ({ isExpanded, onClose, theme, toggleTheme }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { setTranscriptId } = useTranscript(); // Add this line
   const [selectedInterview, setSelectedInterview] = useState<{ interviewer: string, guest: string, transcriptId: string } | null>(null);
   const [interviewers, setInterviewers] = useState<InterviewerData[]>([]);
 
@@ -78,7 +80,7 @@ export const SidePane: React.FC<SidePaneProps> = ({ isExpanded, onClose, theme, 
 
   const handleGuestSelect = (interviewer: string, guest: string, transcriptId: string) => {
     setSelectedInterview({ interviewer, guest, transcriptId });
-    // You might want to add logic here to load the selected transcript
+    setTranscriptId(transcriptId); // Add this line to update the transcript ID in the context
   };
 
   return (

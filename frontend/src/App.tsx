@@ -13,14 +13,16 @@ import LoadingSpinner from './components/LoadingSpinner';
 import './styles/transitions.css';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isLoading, setIsLoading } = useLoading();
 
   React.useEffect(() => {
-    setIsLoading(loading);
-  }, [loading, setIsLoading]);
+    if (!authLoading) {
+      setIsLoading(false);
+    }
+  }, [authLoading, setIsLoading]);
 
-  if (loading || isLoading) {
+  if (authLoading) {
     return <LoadingSpinner />;
   }
 

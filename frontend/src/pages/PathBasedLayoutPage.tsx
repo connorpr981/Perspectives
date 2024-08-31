@@ -15,24 +15,25 @@ import { useLoading } from '../context/LoadingContext';
 import { useTheme } from '../hooks/useTheme';
 import { KEYBOARD_SHORTCUTS } from '../constants/keyboardShortcuts';
 import { useTranscript } from '../context/TranscriptContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const defaultLayoutConfig: LayoutConfig = {
   columns: [
     { title: 'Sections' },
     { title: 'Turns' },
     { title: 'Questions' },
-    { title: 'Perspectives' }, // Add this new column
+    { title: 'Perspectives' },
   ]
 };
 
 const PathBasedLayoutPage: React.FC = () => {
-  const { transcriptId, setTranscriptId } = useTranscript();
+  const { transcriptId } = useTranscript();
+  const { isLoading, setIsLoading } = useLoading();
   const [config] = useState<LayoutConfig>(defaultLayoutConfig);
   const [rootItem, setRootItem] = useState<ItemType | null>(null);
   const [isSidePaneExpanded, setIsSidePaneExpanded] = useState(false);
   const columnsWrapperRef = useRef<HTMLDivElement>(null);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
-  const { setIsLoading } = useLoading();
   const { theme, toggleTheme } = useTheme();
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -58,11 +59,10 @@ const PathBasedLayoutPage: React.FC = () => {
     let isMounted = true;
 
     const fetchTranscript = async () => {
-      if (!rootItem) {
+      if (transcriptId) {
         setIsLoading(true);
         setFetchError(null);
         try {
-          const transcriptId = 'Y0ggv8C4vd4zyhinZYbu'; // Hardcoded ID for testing with emulator
           console.log('Fetching transcript with ID:', transcriptId);
           const data = await fetchTranscriptData(transcriptId);
           console.log('Fetched data:', data);
@@ -81,6 +81,9 @@ const PathBasedLayoutPage: React.FC = () => {
             setIsLoading(false);
           }
         }
+      } else {
+        // If there's no transcriptId, just set loading to false
+        setIsLoading(false);
       }
     };
 
@@ -89,7 +92,7 @@ const PathBasedLayoutPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [setIsLoading]);
+  }, [transcriptId, setIsLoading]);
 
   const toggleSidePane = useCallback(() => {
     setIsSidePaneExpanded(prev => !prev);
@@ -124,16 +127,6 @@ const PathBasedLayoutPage: React.FC = () => {
     };
   }, []);
 
-  if (fetchError) {
-    return <div>Error: {fetchError}</div>;
-  }
-
-  if (!rootItem) {
-    return <div>Loading...</div>;
-  }
-
-  const isFullPathSelected = path.length === config.columns.length;
-
   return (
     <div className={layoutStyles.layout}>
       <header className={layoutStyles.header}>
@@ -148,31 +141,37 @@ const PathBasedLayoutPage: React.FC = () => {
         />
         {isSidePaneExpanded && <div className={layoutStyles.overlay} onClick={toggleSidePane} />}
         <div className={layoutStyles.mainContentWrapper}>
-          <div className={layoutStyles.columnsWrapper} ref={columnsWrapperRef}>
-            <div className={`${layoutStyles.columnsContainer} ${styles.columnsContainer}`}>
-              {config.columns.map((columnConfig, colIndex) => (
-                <PathSelectableColumn
-                  key={colIndex}
-                  config={columnConfig}
-                  items={getItemsForColumn(colIndex)}
-                  onSelect={handleSelect}
-                  path={path}
-                  columnIndex={colIndex}
-                  isActive={colIndex === activeColumnIndex}
-                  scrollColumnIntoView={scrollColumnIntoView}
-                  observe={() => {}}
-                  activeColumnIndex={activeColumnIndex}
-                />
-              ))}
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : fetchError ? (
+            <div className={styles.errorMessage}>{fetchError}</div>
+          ) : (
+            <div className={layoutStyles.columnsWrapper} ref={columnsWrapperRef}>
+              <div className={`${layoutStyles.columnsContainer} ${styles.columnsContainer}`}>
+                {config.columns.map((columnConfig, colIndex) => (
+                  <PathSelectableColumn
+                    key={colIndex}
+                    config={columnConfig}
+                    items={getItemsForColumn(colIndex)}
+                    onSelect={handleSelect}
+                    path={path}
+                    columnIndex={colIndex}
+                    isActive={colIndex === activeColumnIndex}
+                    scrollColumnIntoView={scrollColumnIntoView}
+                    observe={() => {}}
+                    activeColumnIndex={activeColumnIndex}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
         <div className={layoutStyles.savedPathsPanelWrapper}>
           <SavedPathsPanel
             savedPaths={savedPaths}
             loadSavedPath={loadSavedPath}
             onSavePath={savePath}
-            isFullPathSelected={isFullPathSelected}
+            isFullPathSelected={path.length === config.columns.length}
             draftPath={draftPath}
             onResumeDraft={resumeDraftPath}
             onToggleSidePane={toggleSidePane}
