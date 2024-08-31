@@ -73,9 +73,9 @@ const PathBasedLayoutPage: React.FC = () => {
           }
         } catch (error) {
           console.error("Error fetching transcript:", error);
-          if (isMounted) {
-            setFetchError("Failed to load transcript. Please try again.");
-          }
+          // if (isMounted) {
+          //   setFetchError("Failed to load transcript. Please try again.");
+          // }
         } finally {
           if (isMounted) {
             setIsLoading(false);
